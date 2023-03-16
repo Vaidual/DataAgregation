@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAgregation", "DataAgregation\DataAgregation.csproj", "{4BF8998C-3B63-421F-B15A-ABFB0A2848E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4BF8998C-3B63-421F-B15A-ABFB0A2848E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BF8998C-3B63-421F-B15A-ABFB0A2848E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BF8998C-3B63-421F-B15A-ABFB0A2848E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BF8998C-3B63-421F-B15A-ABFB0A2848E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D53E33DC-6B19-4F63-80E6-2784B0A8C18D}
+	EndGlobalSection
+EndGlobal
