@@ -29,10 +29,11 @@ const string excelFilePath = "../../../events_data.xlsx";
 //}
 
 ExcelHandler excelHandler = new ExcelHandler(excelFilePath);
-await excelHandler.WriteDAUAsync();
-await excelHandler.WriteNewUsersAsync();
-await excelHandler.WriteMAUAsync();
-await excelHandler.WriteRevenueAsync();
-await excelHandler.WriteCurrencyRate();
-await excelHandler.WriteStageStatistic();
-await excelHandler.WriteItemsStatistic();
+//await excelHandler.WriteDAUAsync();
+//await excelHandler.WriteNewUsersAsync();
+//await excelHandler.WriteMAUAsync();
+//await excelHandler.WriteRevenueAsync();
+//await excelHandler.WriteCurrencyRate();
+//await excelHandler.WriteStageStatistic();
+//await excelHandler.WriteItemsStatistic();
+await excelHandler.WriteItemsByDateStatistic();

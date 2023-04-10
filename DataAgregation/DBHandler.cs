@@ -19,20 +19,60 @@ namespace DataAgregation
     {
         const int maxDb = 8;
 
-        public async Task<ConcurrentBag<T>> TaskContainer<T>(Func<int, Task<List<T>>> func)
+        public async Task<ConcurrentBag<T>> TaskContainer<T>(Func<Task<List<T>>> func)
         {
-            var resultList = new ConcurrentBag<T>();
+            var result = new ConcurrentBag<T>();
             Task[] tasks = new Task[maxDb];
             for (int i = 0; i < maxDb; i++)
             {
                 tasks[i] = await Task.Factory.StartNew(async () =>
                 {
-                    var result = await func(i);
-                    foreach (var o in result) resultList.Add(o);
+                    using (var context = new DataContext(i))
+                    {
+                        var data = await func();
+                        foreach (var e in data) result.Add(e);
+                    }
                 });
             }
             Task.WaitAll(tasks);
-            return resultList;
+            return result;
+        }
+
+        internal async Task<List<ItemsStatiscticByDate>> GetItemsByDateStatistic()
+        {
+            var events = new ConcurrentBag<ItemsStatiscticByDate>();
+            Task[] tasks = new Task[maxDb];
+            for (int i = 0; i < maxDb; i++)
+            {
+                tasks[i] = await Task.Factory.StartNew(async () =>
+                {
+                    using (var context = new DataContext(i))
+                    {
+                        var result = context.IngamePurchases
+                            .Include(ip => ip.Event)
+                            .GroupBy(ip => ip.Event.Time)
+                            .Select(g => new ItemsStatiscticByDate
+                            {
+                                Date = DateOnly.FromDateTime(g.Key),
+                                SoldAmount = g.Count(),
+                                Income = g.Sum(e => e.Price)
+                            });
+                        foreach (var e in result) events.Add(e);
+                    }
+                });
+            }
+            Task.WaitAll(tasks);
+            var filteredEvents = events
+                .GroupBy(e => e.Date)
+                .Select(g => new ItemsStatiscticByDate
+                {
+                    Date = g.Key,
+                    SoldAmount = g.Sum(e => e.SoldAmount),
+                    Income = g.Sum(e => e.Income)
+                })
+                .OrderBy(e => e.Date)
+                .ToList();
+            return filteredEvents;
         }
 
         public async Task<List<DateUsersCount>> GetDateUsersCountByEventTypeAsync(int type)

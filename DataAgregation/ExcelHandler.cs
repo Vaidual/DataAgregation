@@ -10,7 +10,7 @@ using static Microsoft.IO.RecyclableMemoryStreamManager;
 
 namespace DataAgregation
 {
-    public class ExcelHandler
+    public class ExcelHandler : IDisposable
     {
         ExcelPackage package;
         DBHandler dBHandler = new DBHandler();
@@ -143,6 +143,28 @@ namespace DataAgregation
             sheet.Cells[1, 4].Value = "USD";
             sheet.Cells[2, 1].LoadFromCollection(itemsStatistic);
             package.Save();
+        }
+        internal async Task WriteItemsByDateStatistic()
+        {
+            var itemsStatistic = await dBHandler.GetItemsByDateStatistic();
+            string worksheetName = "Items by date info";
+            if (package.Workbook.Worksheets.Any(s => s.Name == worksheetName))
+            {
+                var existingWorksheet = package.Workbook.Worksheets[worksheetName];
+                package.Workbook.Worksheets.Delete(worksheetName);
+            }
+            var sheet = package.Workbook.Worksheets.Add(worksheetName);
+
+            sheet.Cells[1, 1].Value = "Date";
+            sheet.Cells[1, 2].Value = "Items sold";
+            sheet.Cells[1, 3].Value = "Income";
+            sheet.Cells[2, 1].LoadFromCollection(itemsStatistic);
+            package.Save();
+        }
+
+        public void Dispose()
+        {
+            this.package.Dispose();
         }
     }
 }
