@@ -43,8 +43,8 @@ namespace DataAgregation
             int MAU = await dBHandler.GetLastMonthUsersCountAsync();
             WriteInExcel(
                 "MAU",
-                new string[] { "Active Users" },
-                new List<int>(MAU));
+                "Active Users",
+                MAU.ToString());
         }
 
         internal async Task WriteRevenueAsync()
@@ -105,6 +105,19 @@ namespace DataAgregation
                 sheet.Cells[1, i + 1].Value = columnNames[i];
             }
             sheet.Cells[2, 1].LoadFromCollection(data);
+            package.Save();
+        }
+
+        private void WriteInExcel(string sheetName, string columnName, string value)
+        {
+            if (package.Workbook.Worksheets.Any(s => s.Name == sheetName))
+            {
+                var existingWorksheet = package.Workbook.Worksheets[sheetName];
+                package.Workbook.Worksheets.Delete(sheetName);
+            }
+            var sheet = package.Workbook.Worksheets.Add(sheetName);
+            sheet.Cells[1, 1].Value = columnName;
+            sheet.Cells[2, 1].Value = value;
             package.Save();
         }
 
