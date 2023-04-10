@@ -174,13 +174,6 @@ namespace DataAgregation
                         })
                     .OrderBy(stat => stat.Stage);
             });
-            List<StageDateCount> stageDateCounts = await GetStageDateCountAsync();
-            List<CurrencyRate> rate = await GetCurrencyRateAsync();
-            foreach (var stat in events)
-            {
-                var dates = stageDateCounts.Where(e => e.Stage == stat.Stage);
-                stat.USD = stat.Income * dates.Sum(d => d.Count * rate.First(r => r.Date == DateOnly.FromDateTime(d.Date)).Rate / dates.Sum(d => d.Count));
-            }
             var mergedEvents = events
                 .GroupBy(e => e.Stage)
                 .Select(g => new StageStatistic
@@ -189,11 +182,17 @@ namespace DataAgregation
                     Starts = g.Sum(e => e.Starts),
                     Ends = g.Sum(e => e.Ends),
                     Wins = g.Sum(e => e.Wins),
-                    Income = g.Sum(e => e.Income),
-                    USD = g.Sum(e => e.USD)
+                    Income = g.Sum(e => e.Income)
                 })
                 .OrderBy(e => e.Stage)
                 .ToList();
+            List<StageDateCount> stageDateCounts = await GetStageDateCountAsync();
+            List<CurrencyRate> rate = await GetCurrencyRateAsync();
+            foreach (var stat in mergedEvents)
+            {
+                var dates = stageDateCounts.Where(e => e.Stage == stat.Stage);
+                stat.USD = stat.Income * dates.Sum(d => d.Count * rate.First(r => r.Date == DateOnly.FromDateTime(d.Date)).Rate / dates.Sum(d => d.Count));
+            }
             return mergedEvents;
         }
 
@@ -249,24 +248,23 @@ namespace DataAgregation
                     })
                     .OrderBy(stat => stat.Item);
             });
-            List<ItemDateCount> itemDateCounts = await GetItemDateCountAsync();
-            List<CurrencyRate> rate = await GetCurrencyRateAsync();
-            foreach (var stat in events)
-            {
-                var dates = itemDateCounts.Where(e => e.Item == stat.Item);
-                stat.USD = stat.Income * dates.Sum(d => d.Count * rate.First(r => r.Date == DateOnly.FromDateTime(d.Date)).Rate / dates.Sum(d => d.Count));
-            }
             var mergedEvents = events
                 .GroupBy(e => e.Item)
                 .Select(g => new ItemStatistic
                 {
                     Item = g.Key,
                     Amount = g.Sum(i => i.Amount),
-                    Income = g.Sum(i => i.Income),
-                    USD = g.Sum(i => i.USD),
+                    Income = g.Sum(i => i.Income)
                 })
                 .OrderBy(e => e.Item)
                 .ToList();
+            List<ItemDateCount> itemDateCounts = await GetItemDateCountAsync();
+            List<CurrencyRate> rate = await GetCurrencyRateAsync();
+            foreach (var stat in mergedEvents)
+            {
+                var dates = itemDateCounts.Where(e => e.Item == stat.Item);
+                stat.USD = stat.Income * dates.Sum(d => d.Count * rate.First(r => r.Date == DateOnly.FromDateTime(d.Date)).Rate / dates.Sum(d => d.Count));
+            }
             return mergedEvents;
         }
 
