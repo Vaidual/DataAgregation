@@ -1,4 +1,5 @@
-﻿using DataAgregation.DataManipulationModels;
+﻿using DataAgregation.ClusterModels;
+using DataAgregation.DataManipulationModels;
 using DataAgregation.Models;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -13,11 +14,38 @@ using System.Threading.Tasks;
 using static Microsoft.IO.RecyclableMemoryStreamManager;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace DataAgregation
+namespace DataAgregation.Tools
 {
     public class DBHandler
     {
         const int maxDb = 8;
+
+        public async Task<IEnumerable<ClusterInput>> GetUserAges()
+        {
+            var result = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                return context.Users.Select(u => new ClusterInput(u.Age));
+            });
+            return result;
+        }
+
+        public async Task<IEnumerable<UserCluster>> GetUserAgeData()
+        {
+            var users = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                return context.Users.Select(u => new UserCluster(u.Id, u.Age));
+            });
+            return users;
+        }
+
+        public async Task<List<User>> GetUsers()
+        {
+            var users = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                return context.Users;
+            });
+            return users.ToList();
+        }
 
         private async Task<ConcurrentBag<T>> ExecuteInMultiThreadUsingSingleValue<T>(Func<DataContext, T> func)
         {
@@ -39,13 +67,13 @@ namespace DataAgregation
             return result;
         }
 
-        private async Task<ConcurrentBag<T>> ExecuteInMultiThreadUsingList<T>(Func<DataContext,IEnumerable<T>> func)
+        private async Task<ConcurrentBag<T>> ExecuteInMultiThreadUsingList<T>(Func<DataContext, IEnumerable<T>> func)
         {
             var result = new ConcurrentBag<T>();
             Task[] tasks = new Task[maxDb];
             for (int i = 0; i < maxDb; i++)
             {
-                tasks[i] = await Task.Factory.StartNew(async () =>
+                tasks[i] = await Task.Factory.StartNew( async() =>
                 {
                     using (var context = new DataContext(i))
                     {
@@ -80,6 +108,60 @@ namespace DataAgregation
                     Date = g.Key,
                     SoldAmount = g.Sum(e => e.SoldAmount),
                     Income = g.Sum(e => e.Income)
+                })
+                .OrderBy(e => e.Date)
+                .ToList();
+
+            return mergedEvents;
+        }
+
+        public async Task<List<DateUsers>> GetDateUsersClustersByEventTypeAsync(int type)
+        {
+            var events = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                return context.Events
+                    .Where(e => e.EventIdentifier == type)
+                    .Include(e => e.User)
+                    .GroupBy(e => e.Time)
+                    .Select(g => new DateUsers
+                    {
+                        Date = DateOnly.FromDateTime(g.Key),
+                        UsersClusters = g.Select(g => new UserCluster(g.UserId, g.User.Age))
+                    });
+            });
+            var mergedEvents = events
+                .GroupBy(e => e.Date)
+                .Select(g => new DateUsers
+                {
+                    Date = g.Key,
+                    UsersClusters = g.Select(g => g.UsersClusters).SelectMany(l => l)
+                })
+                .OrderBy(e => e.Date)
+                .ToList();
+
+            return mergedEvents;
+        }
+
+        public async Task<List<DateAges>> GetDateAgesByEventTypeAsync(int type)
+        {
+            var events = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                return context.Events
+                    .Where(e => e.EventIdentifier == type)
+                    .Include(e => e.User)
+                    .GroupBy(e => e.Time)
+                    .Select(g => new DateAges
+                    {
+                        Date = DateOnly.FromDateTime(g.Key),
+                        Ages = g.Select(g => g.User.Age)
+                    });
+            });
+            var mergedEvents = events
+                .GroupBy(e => e.Date)
+                .Select(g => new DateAges
+                {
+                    Date = g.Key,
+                    Ages = g.SelectMany(g => g.Ages)
                 })
                 .OrderBy(e => e.Date)
                 .ToList();
