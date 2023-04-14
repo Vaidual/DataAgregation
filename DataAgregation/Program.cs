@@ -57,18 +57,18 @@ using (ExcelHandler excelHandler = new ExcelHandler("../../../age-clusters.xlsx"
     {
         colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
     }
-    excelHandler.WriteInExcel(
-        "DAU",
-        colunsHeaders,
-        await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals));
-    excelHandler.WriteInExcel(
-        "New Users",
-        colunsHeaders,
-        await dBHandler.GetAgeStatisticByEventTypeAsync(2, intervals));
+    //excelHandler.WriteInExcel(
+    //    "DAU",
+    //    colunsHeaders,
+    //    await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals));
+    //excelHandler.WriteInExcel(
+    //    "New Users",
+    //    colunsHeaders,
+    //    await dBHandler.GetAgeStatisticByEventTypeAsync(2, intervals));
     excelHandler.WriteInExcel(
         "Revenue",
         colunsHeaders,
-        await dBHandler.GetRevenuebyAgeAsync(intervals));
+        await dBHandler.GetRevenuebyAgeAsync2(intervals));
     excelHandler.WriteInExcel(
         "MAU",
         colunsHeaders.Skip(1),

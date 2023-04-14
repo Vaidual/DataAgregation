@@ -137,17 +137,17 @@ namespace DataAgregation.Tools
                 itemsStatistic);
         }
 
-        public void WriteInExcel<T>(string sheetName, IEnumerable<string> columnNames, List<T> data)
-        {
-            var sheet = CreateUniqueSheet(sheetName);
+        //public void WriteInExcel<T>(string sheetName, IEnumerable<string> columnNames, List<T> data)
+        //{
+        //    var sheet = CreateUniqueSheet(sheetName);
 
-            for (int i = 0; i < columnNames.Count(); i++)
-            {
-                sheet.Cells[1, i + 1].Value = columnNames.ElementAt(i);
-            }
-            sheet.Cells[2, 1].LoadFromCollection(data);
-            package.Save();
-        }
+        //    for (int i = 0; i < columnNames.Count(); i++)
+        //    {
+        //        sheet.Cells[1, i + 1].Value = columnNames.ElementAt(i);
+        //    }
+        //    sheet.Cells[2, 1].LoadFromCollection(data);
+        //    package.Save();
+        //}
 
         private void WriteInExcel<KeyT, ListT>(string sheetName, string[] columnNames, Dictionary<KeyT, IEnumerable<ListT>> data)
         {
@@ -196,6 +196,54 @@ namespace DataAgregation.Tools
                 sheet.Cells[1, i + 1].Value = columnNames.ElementAt(i);
             }
             sheet.Cells[2, 1].LoadFromCollection(new List<T>{ value });
+            package.Save();
+        }
+
+        public void WriteInExcel<T>(string sheetName, IEnumerable<string> columnNames, List<T> data)
+        {
+            var sheet = CreateUniqueSheet(sheetName);
+            for (int i = 0; i < columnNames.Count(); i++)
+            {
+                sheet.Cells[1, i + 1].Value = columnNames.ElementAt(i);
+            }
+            for (int i = 0; i < data.Count(); i++)
+            {
+                var obj = data[i];
+                int col = 1;
+                for (int j = 0; j < obj.GetType().GetProperties().Count(); j++)
+                {
+                    var prop = obj.GetType().GetProperties()[j];
+                    var value = prop.GetValue(obj);
+                    var type = prop.PropertyType;
+                    if (typeof(IEnumerable).IsAssignableFrom(type))
+                    {
+                        var list = value as IEnumerable;
+                        foreach (var item in list)
+                        {
+                            if (!item.GetType().IsValueType)
+                            {
+                                throw new Exception($"Type '{item.GetType().Name}' is not a valid type for printing");
+                            }
+                            sheet.Cells[i + 2, col].Value = item;
+                            col++;
+                        }
+                    }
+                    else if (type.IsValueType)
+                    {
+                        sheet.Cells[i + 2, col].Value = value;
+                        col++;
+                    }
+                    else if (type.IsClass)
+                    {
+                        sheet.Cells[i + 2, col].LoadFromCollection(new List<object> { value });
+                        col += type.GetProperties().Count();
+                    }
+                    else
+                    {
+                        throw new Exception($"Type '{type.Name}' is not a valid type for printing");
+                    }
+                }
+            }
             package.Save();
         }
 
