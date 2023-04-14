@@ -23,29 +23,9 @@ namespace DataAgregation.Tools
     {
         MLContext _mlContext = new MLContext(seed:42);
 
-        public Dictionary<string, int> CreateClastersByAge3(IEnumerable<UserCluster> data)
+        public IDataView CreateDataView(IEnumerable<ClusterInput> data)
         {
-            int clusterAmount = 4;
-            var pipeline = _mlContext.Transforms
-                .Concatenate(
-                    "Features",
-                    "Value")
-                .Append(_mlContext.Clustering.Trainers.KMeans(
-                    "Features",
-                    numberOfClusters: clusterAmount));
-
-            // Train the K-means model
-            var dataView = _mlContext.Data.LoadFromEnumerable(data);
-            var model = pipeline.Fit(dataView);
-            var predictions = model.Transform(dataView);
-            var clusters = _mlContext.Data.CreateEnumerable<ClusterPrediction>(predictions, reuseRowObject: false);
-            Dictionary<string, int> result = new Dictionary<string, int>();
-            var ageData = data.Zip(clusters, (inputData, cluster) => new { UserId = inputData.UserId, ClusterId = cluster.ClusterId });
-            foreach (var o in ageData)
-            {
-                result.Add(o.UserId, (int)o.ClusterId);
-            }
-            return result;
+            return _mlContext.Data.LoadFromEnumerable(data);
         }
 
         public TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> CreateModel(IEnumerable<ClusterInput> data, int clusterAmount)
@@ -63,17 +43,17 @@ namespace DataAgregation.Tools
             return pipeline.Fit(dataView);
         }
 
-        public IEnumerable<AgeInterval> FindIntervals(IEnumerable<ClusterInput> data, TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> model)
+        public IEnumerable<AgeInterval> FindAgeIntervals(IEnumerable<ClusterInput> data, TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> model)
         {
             var dataView = _mlContext.Data.LoadFromEnumerable(data);
             var predictions = model.Transform(dataView);
             var clusters = _mlContext.Data.CreateEnumerable<ClusterPrediction>(predictions, reuseRowObject: false);
             var ageData = data.Zip(clusters, (inputData, cluster) => new { Age = inputData.Value, ClusterId = cluster.ClusterId });
-            return ageData.GroupBy(a => a.ClusterId).OrderBy(g => g.Key)
+            return ageData.GroupBy(a => a.ClusterId)
                 .Select(g => new AgeInterval { MinAge = (int)g.Min(a => a.Age), MaxAge = (int)g.Max(a => a.Age) }).OrderBy(e => e.MinAge).ToArray();
         }
 
-        public int[] GetIntervalsEnters(IEnumerable<ClusterInput> data, TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> model)
+        public int[] GetIntervalOccurrences(IEnumerable<ClusterInput> data, TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> model)
         {
             var dataView = _mlContext.Data.LoadFromEnumerable(data);
             var predictions = model.Transform(dataView);
@@ -81,7 +61,7 @@ namespace DataAgregation.Tools
             return clusters.GroupBy(a => a.ClusterId).OrderBy(g => g.Key).Select(g => g.Count()).ToArray();
         }
 
-        public IEnumerable<AgeInterval> CreateClastersByAge(IEnumerable<ClusterInput> data)
+        public IEnumerable<AgeInterval> FindAgeIntervals(IEnumerable<ClusterInput> data)
         {
             int clusterAmount = 4;
             var pipeline = _mlContext.Transforms

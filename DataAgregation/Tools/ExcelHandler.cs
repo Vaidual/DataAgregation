@@ -45,7 +45,7 @@ namespace DataAgregation.Tools
             var clusterInput = dateAges.SelectMany(da => da.Ages).Select(a => new ClusterInput(a));
             var model = clasterMaker.CreateModel(clusterInput, 4);
 
-            var intervals = clasterMaker.FindIntervals(clusterInput, model);
+            var intervals = clasterMaker.FindAgeIntervals(clusterInput, model);
             string[] colunsHeaders = new string[5];
             colunsHeaders[0] = "Date";
             for (int i = 0; i < intervals.Count(); i++)
@@ -58,7 +58,7 @@ namespace DataAgregation.Tools
             {
                 result.Add(
                     date.Date,
-                    clasterMaker.GetIntervalsEnters(date.Ages.Select(a => new ClusterInput(a)), model));
+                    clasterMaker.GetIntervalOccurrences(date.Ages.Select(a => new ClusterInput(a)), model));
             }
             WriteInExcel(
                 "DAU",
@@ -236,6 +236,74 @@ namespace DataAgregation.Tools
                     else if (type.IsClass)
                     {
                         sheet.Cells[i + 2, col].LoadFromCollection(new List<object> { value });
+                        col += type.GetProperties().Count();
+                    }
+                    else
+                    {
+                        throw new Exception($"Type '{type.Name}' is not a valid type for printing");
+                    }
+                }
+            }
+            package.Save();
+        }
+
+        public void WriteInExcel<T>(string sheetName, string[][] columnNames, List<T> data)
+        {
+            var sheet = CreateUniqueSheet(sheetName);
+            int colIndex = 1;
+            for (int i = 0; i < columnNames.Count(); i++)
+            {
+                var column = columnNames[i];
+                if (column.Length == 1)
+                {
+                    var range = sheet.Cells[1, colIndex, 2, colIndex];
+                    range.Merge = true;
+                    range.Value = column[0];
+                    colIndex++;
+                }
+                else
+                {
+                    var cellAdditionalLength = column.Length - 2;
+                    var range = sheet.Cells[1, colIndex, 1, colIndex + cellAdditionalLength];
+                    range.Merge = true;
+                    range.Value = column[0];
+                    for (int j = 1; j < column.Length; j++)
+                    {
+                        sheet.Cells[2, colIndex].Value = column[j];
+                        colIndex++;
+                    }
+                }
+            }
+            for (int i = 0; i < data.Count(); i++)
+            {
+                var obj = data[i];
+                int col = 1;
+                for (int j = 0; j < obj.GetType().GetProperties().Count(); j++)
+                {
+                    var prop = obj.GetType().GetProperties()[j];
+                    var value = prop.GetValue(obj);
+                    var type = prop.PropertyType;
+                    if (type.IsValueType || value is string)
+                    {
+                        sheet.Cells[i + 3, col].Value = value;
+                        col++;
+                    }
+                    else if (typeof(IEnumerable).IsAssignableFrom(type))
+                    {
+                        var list = value as IEnumerable;
+                        foreach (var item in list)
+                        {
+                            if (!item.GetType().IsValueType)
+                            {
+                                throw new Exception($"Type '{item.GetType().Name}' is not a valid type for printing");
+                            }
+                            sheet.Cells[i + 3, col].Value = item;
+                            col++;
+                        }
+                    }
+                    else if (type.IsClass)
+                    {
+                        sheet.Cells[i + 3, col].LoadFromCollection(new List<object> { value });
                         col += type.GetProperties().Count();
                     }
                     else

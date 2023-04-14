@@ -21,7 +21,7 @@ namespace DataAgregation.Tools
     {
         const int maxDb = 8;
 
-        public async Task<List<ItemStatistic>> GetItemsStatisticByAge(IEnumerable<AgeInterval> intervals)
+        public async Task<List<ItemStatisticWithIntervals>> GetItemsStatisticByAge(IEnumerable<AgeInterval> intervals)
         {
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
@@ -39,33 +39,57 @@ namespace DataAgregation.Tools
                         (e, u) => new { e.ItemName, e.Price, u.Age }
                     )
                     .GroupBy(e => e.ItemName)
-                    .Select(g => new ItemStatistic
+                    .AsEnumerable()
+                    .Select(g =>
                     {
-                        Item = g.Key,
-                        Amount = g.Count(),
-                        Income = g.Sum(i => i.Price),
-                        USD = 0
-                    })
-                    .OrderBy(stat => stat.Item);
+                        var result = new ItemStatisticWithIntervals() 
+                        { 
+                            ItemName = g.Key, 
+                            Amount = new List<int>(), 
+                            Income = new List<int>(), 
+                        };
+                        for (int i = 0; i < intervals.Count(); i++)
+                        {
+                            int minAge = intervals.ElementAt(i).MinAge;
+                            int maxAge = intervals.ElementAt(i).MaxAge;
+
+                            result.Amount
+                                .Add(g.Where(e => e.Age >= minAge && e.Age <= maxAge)
+                                .Count());
+                            result.Income
+                                .Add(g.Where(e => e.Age >= minAge && e.Age <= maxAge)
+                                .Sum(e => e.Price));
+                        }
+                        return result;
+                    });
             });
-            var mergedEvents = events
-                .GroupBy(e => e.Item)
-                .Select(g => new ItemStatistic
+            var mergedItemStats = events
+                .GroupBy(e => e.ItemName)
+                .Select(g =>
                 {
-                    Item = g.Key,
-                    Amount = g.Sum(i => i.Amount),
-                    Income = g.Sum(i => i.Income)
+                    var result = new ItemStatisticWithIntervals()
+                    {
+                        ItemName = g.Key,
+                        Amount = new List<int>(),
+                        Income = new List<int>(),
+                    };
+                    for (int i = 0; i < intervals.Count(); i++)
+                    {
+                        result.Amount.Add(g.Sum(e => e.Amount[i]));
+                        result.Income.Add(g.Sum(e => e.Income[i]));
+                    }
+                    return result;
                 })
-                .OrderBy(e => e.Item)
+                .OrderBy(e => e.ItemName)
                 .ToList();
             List<ItemDateCount> itemDateCounts = await GetItemDateCountAsync();
             List<CurrencyRate> rate = await GetCurrencyRateAsync();
-            foreach (var stat in mergedEvents)
+            foreach (var itemStat in mergedItemStats)
             {
-                var dates = itemDateCounts.Where(e => e.Item == stat.Item);
-                stat.USD = stat.Income * dates.Sum(d => d.Count * rate.First(r => r.Date == DateOnly.FromDateTime(d.Date)).Rate / dates.Sum(d => d.Count));
+                var dates = itemDateCounts.Where(e => e.Item == itemStat.ItemName);
+                itemStat.USD = itemStat.Income.Sum() * dates.Sum(d => d.Count * rate.First(r => r.Date == DateOnly.FromDateTime(d.Date)).Rate / dates.Sum(d => d.Count));
             }
-            return mergedEvents;
+            return mergedItemStats;
         }
 
         public async Task<List<DateListIntervalEnters<decimal>>> GetRevenuebyAgeAsync2(IEnumerable<AgeInterval> intervals)

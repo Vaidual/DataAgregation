@@ -48,29 +48,38 @@ using (ExcelHandler excelHandler = new ExcelHandler("../../../age-clusters.xlsx"
 {
     var ages = await dBHandler.GetUserAges();
     ClasterMaker clasterMaker = new ClasterMaker();
-    var model = clasterMaker.CreateModel(ages, 4);
-    var intervals = clasterMaker.FindIntervals(ages, model);
+    var intervals = clasterMaker.FindAgeIntervals(ages);
 
-    string[] colunsHeaders = new string[5];
-    colunsHeaders[0] = "Date";
+    string[] intervalHeaders = new string[4];
     for (int i = 0; i < intervals.Count(); i++)
     {
-        colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
+        intervalHeaders[i] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
     }
     //excelHandler.WriteInExcel(
     //    "DAU",
-    //    colunsHeaders,
+    //    new string[] { "ItemName" + intervalHeaders },
     //    await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals));
     //excelHandler.WriteInExcel(
     //    "New Users",
-    //    colunsHeaders,
+    //    new string[] { "ItemName" + intervalHeaders },
     //    await dBHandler.GetAgeStatisticByEventTypeAsync(2, intervals));
+    //excelHandler.WriteInExcel(
+    //    "Revenue",
+    //    new string[] { "ItemName" + intervalHeaders },
+    //    await dBHandler.GetRevenuebyAgeAsync2(intervals));
+    //excelHandler.WriteInExcel(
+    //    "MAU",
+    //    intervalHeaders,
+    //    await dBHandler.GetMauByAgeAsync(intervals));
     excelHandler.WriteInExcel(
-        "Revenue",
-        colunsHeaders,
-        await dBHandler.GetRevenuebyAgeAsync2(intervals));
-    excelHandler.WriteInExcel(
-        "MAU",
-        colunsHeaders.Skip(1),
-        await dBHandler.GetMauByAgeAsync(intervals));
+        "Items Statistic",
+        new string[][] 
+        {  
+            new string[] { "Item"},
+            new string[] { "Amount" }.Concat(intervalHeaders).ToArray(),
+            new string[] { "Income" }.Concat(intervalHeaders).ToArray(),
+            new string[] { "USD"},
+
+        },
+        await dBHandler.GetItemsStatisticByAge(intervals));
 }
