@@ -177,14 +177,25 @@ namespace DataAgregation.Tools
             package.Save();
         }
 
-        public void WriteInExcel<T>(string sheetName, IEnumerable<string> columnNames, T value)
+        public void WriteInExcel(string sheetName, IEnumerable<string> columnNames, string value)
         {
             var sheet = CreateUniqueSheet(sheetName);
             for (int i = 0; i < columnNames.Count(); i++)
             {
-                sheet.Cells[1, i + 1].Value = columnNames.ElementAt(0);
+                sheet.Cells[1, i + 1].Value = columnNames.ElementAt(i);
             }
             sheet.Cells[2, 1].Value = value;
+            package.Save();
+        }
+
+        public void WriteInExcel<T>(string sheetName, IEnumerable<string> columnNames, T value) where T : class
+        {
+            var sheet = CreateUniqueSheet(sheetName);
+            for (int i = 0; i < columnNames.Count(); i++)
+            {
+                sheet.Cells[1, i + 1].Value = columnNames.ElementAt(i);
+            }
+            sheet.Cells[2, 1].LoadFromCollection(new List<T>{ value });
             package.Save();
         }
 

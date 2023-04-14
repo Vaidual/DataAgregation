@@ -22,7 +22,6 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 const string dataDirPath = "../../../data";
 const string excelFilePath = "../../../events_data.xlsx";
-const string clustersFilePath = "../../../clusters_data.xlsx";
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 DBHandler dBHandler = new DBHandler();
@@ -46,7 +45,7 @@ using (ExcelHandler excelHandler = new ExcelHandler(excelFilePath))
 }
 
 
-using (ExcelHandler excelHandler = new ExcelHandler(clustersFilePath))
+using (ExcelHandler excelHandler = new ExcelHandler("../../../age-clusters.xlsx"))
 {
     var ages = await dBHandler.GetUserAges();
     ClasterMaker clasterMaker = new ClasterMaker();
@@ -59,17 +58,20 @@ using (ExcelHandler excelHandler = new ExcelHandler(clustersFilePath))
     {
         colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
     }
-
+    //excelHandler.WriteInExcel(
+    //    "DAU",
+    //    colunsHeaders,
+    //    await dBHandler.GetDateIntervalEntersByEventTypeAsync(1, intervals));
+    //excelHandler.WriteInExcel(
+    //    "New Users",
+    //    colunsHeaders,
+    //    await dBHandler.GetDateIntervalEntersByEventTypeAsync(2, intervals));
     excelHandler.WriteInExcel(
-        "DAU",
+        "Revenue",
         colunsHeaders,
-        await dBHandler.GetDateIntervalEntersByEventTypeAsync(1, intervals));
-    excelHandler.WriteInExcel(
-        "New Users",
-        colunsHeaders,
-        await dBHandler.GetDateIntervalEntersByEventTypeAsync(2, intervals));
-    excelHandler.WriteInExcel(
-        "MAU",
-        colunsHeaders.Skip(1),
-        await dBHandler.GetDateIntervalMauAsync(intervals));
+        await dBHandler.GetDateIntervalRevenueAsync(intervals));
+    //excelHandler.WriteInExcel(
+    //    "MAU",
+    //    colunsHeaders.Skip(1),
+    //    await dBHandler.GetDateIntervalMauAsync(intervals));
 }

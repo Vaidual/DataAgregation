@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace DataAgregation.ClusterModels
 {
-    public class DateIntervalEnters
+    public class DateIntervalEnters<T>
     {
         public DateOnly Date { get; set; }
-        public int IntervalEnters1 { get; set; }
-        public int IntervalEnters2 { get; set; }
-        public int IntervalEnters3 { get; set; }
-        public int IntervalEnters4 { get; set; }
+        public T IntervalEnters1 { get; set; }
+        public T IntervalEnters2 { get; set; }
+        public T IntervalEnters3 { get; set; }
+        public T IntervalEnters4 { get; set; }
     }
 }
