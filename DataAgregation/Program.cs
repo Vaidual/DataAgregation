@@ -66,12 +66,12 @@ using (ExcelHandler excelHandler = new ExcelHandler("../../../age-clusters.xlsx"
     //    "New Users",
     //    colunsHeaders,
     //    await dBHandler.GetDateIntervalEntersByEventTypeAsync(2, intervals));
-    excelHandler.WriteInExcel(
-        "Revenue",
-        colunsHeaders,
-        await dBHandler.GetDateIntervalRevenueAsync(intervals));
     //excelHandler.WriteInExcel(
-    //    "MAU",
-    //    colunsHeaders.Skip(1),
-    //    await dBHandler.GetDateIntervalMauAsync(intervals));
+    //    "Revenue",
+    //    colunsHeaders,
+    //    await dBHandler.GetRevenuebyAgeAsync(intervals));
+    excelHandler.WriteInExcel(
+        "MAU",
+        colunsHeaders.Skip(1),
+        await dBHandler.GetMauByAgeAsync(intervals));
 }

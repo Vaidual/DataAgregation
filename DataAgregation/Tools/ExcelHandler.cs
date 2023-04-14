@@ -31,7 +31,7 @@ namespace DataAgregation.Tools
             {
                 colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
             }
-            var data = await dBHandler.GetDateIntervalEntersByEventTypeAsync(1, intervals);
+            var data = await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals);
             WriteInExcel(
                 "DAU",
                 colunsHeaders,
