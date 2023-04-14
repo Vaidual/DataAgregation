@@ -26,9 +26,18 @@ namespace DataAgregation.Tools
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
                 return context.CurrencyPurchases
-                    .Include(cp => cp.Event)
-                    .ThenInclude(e => e.User)
-                    .Select(e => new { Date = e.Event.Time, Age = e.Event.User.Age, Income = e.Price })
+                    .Join(
+                        context.Events,
+                        cp => cp.EventId,
+                        e => e.Id,
+                        (cp, e) => new { Date = e.Time, Income = cp.Price, UserId = e.UserId}
+                    )
+                    .Join(
+                        context.Users,
+                        e => e.UserId,
+                        u => u.Id,
+                        (e, u) => new { e.Date, e.Income, u.Age }
+                    )
                     .GroupBy(e => e.Date)
                     .Select(g => new DateIntervalEnters<decimal>
                     {
@@ -179,15 +188,20 @@ namespace DataAgregation.Tools
             {
                 return context.Events
                     .Where(e => e.EventIdentifier == type)
-                    .Include(e => e.User)
-                    .GroupBy(e => e.Time)
+                    .Join(
+                        context.Users,
+                        e => e.UserId,
+                        u => u.Id,
+                        (e, u) => new { UserId = e.UserId, Age = u.Age, Date = e.Time }
+                    )
+                    .GroupBy(e => e.Date)
                     .Select(g => new DateIntervalEnters<int>
                     {
                         Date = DateOnly.FromDateTime(g.Key),
-                        IntervalEnters1 = g.Count(e => e.User.Age >= intervals.ElementAt(0).MinAge && e.User.Age <= intervals.ElementAt(0).MaxAge),
-                        IntervalEnters2 = g.Count(e => e.User.Age >= intervals.ElementAt(1).MinAge && e.User.Age <= intervals.ElementAt(1).MaxAge),
-                        IntervalEnters3 = g.Count(e => e.User.Age >= intervals.ElementAt(2).MinAge && e.User.Age <= intervals.ElementAt(2).MaxAge),
-                        IntervalEnters4 = g.Count(e => e.User.Age >= intervals.ElementAt(3).MinAge && e.User.Age <= intervals.ElementAt(3).MaxAge),
+                        IntervalEnters1 = g.Where(e => e.Age >= intervals.ElementAt(0).MinAge && e.Age <= intervals.ElementAt(0).MaxAge).Select(e => e.UserId).Distinct().Count(),
+                        IntervalEnters2 = g.Where(e => e.Age >= intervals.ElementAt(1).MinAge && e.Age <= intervals.ElementAt(1).MaxAge).Select(e => e.UserId).Distinct().Count(),
+                        IntervalEnters3 = g.Where(e => e.Age >= intervals.ElementAt(2).MinAge && e.Age <= intervals.ElementAt(2).MaxAge).Select(e => e.UserId).Distinct().Count(),
+                        IntervalEnters4 = g.Where(e => e.Age >= intervals.ElementAt(3).MinAge && e.Age <= intervals.ElementAt(3).MaxAge).Select(e => e.UserId).Distinct().Count(),
                     });
             });
             var mergedEvents = events
