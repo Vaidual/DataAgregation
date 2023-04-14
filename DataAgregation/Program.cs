@@ -25,9 +25,8 @@ const string excelFilePath = "../../../events_data.xlsx";
 const string clustersFilePath = "../../../clusters_data.xlsx";
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+DBHandler dBHandler = new DBHandler();
 //var dataDirInfo = new DirectoryInfo(dataDirPath).GetFiles();
-
-//DBHandler dBHandler = new DBHandler();
 //foreach (FileInfo file in dataDirInfo)
 //{
 //    await dBHandler.AddEventsAsync(file);
@@ -46,8 +45,31 @@ using (ExcelHandler excelHandler = new ExcelHandler(excelFilePath))
     //await excelHandler.WriteItemsByDateStatistic();
 }
 
-DBHandler dBHandler = new DBHandler();
+
 using (ExcelHandler excelHandler = new ExcelHandler(clustersFilePath))
 {
-    await excelHandler.WriteDAUWithClusters2();
+    var ages = await dBHandler.GetUserAges();
+    ClasterMaker clasterMaker = new ClasterMaker();
+    var model = clasterMaker.CreateModel(ages, 4);
+    var intervals = clasterMaker.FindIntervals(ages, model);
+
+    string[] colunsHeaders = new string[5];
+    colunsHeaders[0] = "Date";
+    for (int i = 0; i < intervals.Count(); i++)
+    {
+        colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
+    }
+
+    excelHandler.WriteInExcel(
+        "DAU",
+        colunsHeaders,
+        await dBHandler.GetDateIntervalEntersByEventTypeAsync(1, intervals));
+    excelHandler.WriteInExcel(
+        "New Users",
+        colunsHeaders,
+        await dBHandler.GetDateIntervalEntersByEventTypeAsync(2, intervals));
+    excelHandler.WriteInExcel(
+        "MAU",
+        colunsHeaders.Skip(1),
+        await dBHandler.GetDateIntervalMauAsync(intervals));
 }

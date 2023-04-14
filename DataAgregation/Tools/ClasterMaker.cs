@@ -21,7 +21,7 @@ namespace DataAgregation.Tools
     }
     public class ClasterMaker
     {
-        MLContext _mlContext = new MLContext();
+        MLContext _mlContext = new MLContext(seed:42);
 
         public Dictionary<string, int> CreateClastersByAge3(IEnumerable<UserCluster> data)
         {
@@ -63,14 +63,14 @@ namespace DataAgregation.Tools
             return pipeline.Fit(dataView);
         }
 
-        public AgeInterval[] FindIntervals(IEnumerable<ClusterInput> data, TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> model)
+        public IEnumerable<AgeInterval> FindIntervals(IEnumerable<ClusterInput> data, TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> model)
         {
             var dataView = _mlContext.Data.LoadFromEnumerable(data);
             var predictions = model.Transform(dataView);
             var clusters = _mlContext.Data.CreateEnumerable<ClusterPrediction>(predictions, reuseRowObject: false);
             var ageData = data.Zip(clusters, (inputData, cluster) => new { Age = inputData.Value, ClusterId = cluster.ClusterId });
-            return ageData.GroupBy(a => a.ClusterId)
-                .Select(g => new AgeInterval { MinAge = (int)g.Min(a => a.Age), MaxAge = (int)g.Max(a => a.Age) }).ToArray();
+            return ageData.GroupBy(a => a.ClusterId).OrderBy(g => g.Key)
+                .Select(g => new AgeInterval { MinAge = (int)g.Min(a => a.Age), MaxAge = (int)g.Max(a => a.Age) }).OrderBy(e => e.MinAge).ToArray();
         }
 
         public int[] GetIntervalsEnters(IEnumerable<ClusterInput> data, TransformerChain<ClusteringPredictionTransformer<KMeansModelParameters>> model)
@@ -81,7 +81,7 @@ namespace DataAgregation.Tools
             return clusters.GroupBy(a => a.ClusterId).OrderBy(g => g.Key).Select(g => g.Count()).ToArray();
         }
 
-        public AgeInterval[] CreateClastersByAge2(IEnumerable<UserCluster> data)
+        public IEnumerable<AgeInterval> CreateClastersByAge(IEnumerable<ClusterInput> data)
         {
             int clusterAmount = 4;
             var pipeline = _mlContext.Transforms
@@ -99,7 +99,7 @@ namespace DataAgregation.Tools
             var clusters = _mlContext.Data.CreateEnumerable<ClusterPrediction>(predictions, reuseRowObject: false);
             var ageData = data.Zip(clusters, (inputData, cluster) => new { Age = inputData.Value, ClusterId = cluster.ClusterId });
             return ageData.GroupBy(a => a.ClusterId)
-                .Select(g => new AgeInterval { MinAge = (int)g.Min(a => a.Age), MaxAge = (int)g.Max(a => a.Age) }).ToArray();
+                .Select(g => new AgeInterval { MinAge = (int)g.Min(a => a.Age), MaxAge = (int)g.Max(a => a.Age) }).OrderBy(e => e.MinAge).ToArray();
         }
     }
 }

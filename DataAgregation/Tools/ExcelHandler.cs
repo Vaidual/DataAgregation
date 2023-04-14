@@ -23,18 +23,15 @@ namespace DataAgregation.Tools
             package = new ExcelPackage(path);
         }
 
-        internal async Task WriteDAUWithClusters()
+        internal async Task WriteDAUWithAgeClusters(IEnumerable<AgeInterval> intervals)
         {
-            var usersData = await dBHandler.GetUserAgeData();
-            ClasterMaker clasterMaker = new ClasterMaker();
-            var intervals = clasterMaker.CreateClastersByAge2(usersData);
             string[] colunsHeaders = new string[5];
             colunsHeaders[0] = "Date";
-            for (int i = 0; i < intervals.Length; i++)
+            for (int i = 0; i < intervals.Count(); i++)
             {
-                colunsHeaders[i + 1] = $"{intervals[i].MinAge}-{intervals[i].MaxAge}";
+                colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
             }
-            var data = await dBHandler.GetDateUsersClustersByEventTypeAsync(1);
+            var data = await dBHandler.GetDateIntervalEntersByEventTypeAsync(1, intervals);
             WriteInExcel(
                 "DAU",
                 colunsHeaders,
@@ -51,22 +48,19 @@ namespace DataAgregation.Tools
             var intervals = clasterMaker.FindIntervals(clusterInput, model);
             string[] colunsHeaders = new string[5];
             colunsHeaders[0] = "Date";
-            for (int i = 0; i < intervals.Length; i++)
+            for (int i = 0; i < intervals.Count(); i++)
             {
-                colunsHeaders[i + 1] = $"{intervals[0].MinAge}-{intervals[0].MaxAge}";
+                colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
             }
 
-            List<DateAgeEnters> result = new();
+            Dictionary<DateOnly, IEnumerable<int>> result = new();
             foreach (var date in dateAges)
             {
-                result.Add(new DateAgeEnters 
-                { 
-                    Date = date.Date, 
-                    Ages = clasterMaker.GetIntervalsEnters(clusterInput, model) 
-                });
+                result.Add(
+                    date.Date,
+                    clasterMaker.GetIntervalsEnters(date.Ages.Select(a => new ClusterInput(a)), model));
             }
-            var data = await dBHandler.GetDateUsersClustersByEventTypeAsync(1);
-            WriteInExcelWithNestedLists(
+            WriteInExcel(
                 "DAU",
                 colunsHeaders,
                 result);
@@ -143,19 +137,19 @@ namespace DataAgregation.Tools
                 itemsStatistic);
         }
 
-        private void WriteInExcel<T>(string sheetName, string[] columnNames, List<T> data)
+        public void WriteInExcel<T>(string sheetName, IEnumerable<string> columnNames, List<T> data)
         {
             var sheet = CreateUniqueSheet(sheetName);
 
-            for (int i = 0; i < columnNames.Length; i++)
+            for (int i = 0; i < columnNames.Count(); i++)
             {
-                sheet.Cells[1, i + 1].Value = columnNames[i];
+                sheet.Cells[1, i + 1].Value = columnNames.ElementAt(i);
             }
             sheet.Cells[2, 1].LoadFromCollection(data);
             package.Save();
         }
 
-        private void WriteInExcelWithNestedLists<T>(string sheetName, string[] columnNames, List<T> data)
+        private void WriteInExcel<KeyT, ListT>(string sheetName, string[] columnNames, Dictionary<KeyT, IEnumerable<ListT>> data)
         {
             var sheet = CreateUniqueSheet(sheetName);
 
@@ -166,32 +160,30 @@ namespace DataAgregation.Tools
 
             for (int i = 0; i < data.Count; i++)
             {
-                T obj = data[i];
-                int cell = 1;
-                for (int j = 0; j < obj.GetType().GetProperties().Length; j++)
+                sheet.Cells[i + 2, 1].Value = data.Keys.ElementAt(i);
+                for (int j = 0; j < data.First().Value.Count(); j++)
                 {
-                    var prop = obj.GetType().GetProperties()[j];
-                    var type = prop.GetType();
-                    if (!typeof(IEnumerable<>).IsAssignableFrom(type))
-                    {
-                        sheet.Cells[i + 2, cell].Value = prop.GetValue(obj);
-                        cell++;
-                    }
-                    else
-                    {
-                        var value = prop.GetValue(obj) as IEnumerable<object>;
-                        sheet.Cells[i + 2, cell].LoadFromCollection(value);
-                        cell += value.Count();
-                    }
+                    sheet.Cells[i + 2, j + 2].Value = data.Values.ElementAt(i).ElementAt(j);
                 }
             }
             package.Save();
         }
 
-        private void WriteInExcel(string sheetName, string columnName, string value)
+        public void WriteInExcel(string sheetName, string columnName, string value)
         {
             var sheet = CreateUniqueSheet(sheetName);
             sheet.Cells[1, 1].Value = columnName;
+            sheet.Cells[2, 1].Value = value;
+            package.Save();
+        }
+
+        public void WriteInExcel<T>(string sheetName, IEnumerable<string> columnNames, T value)
+        {
+            var sheet = CreateUniqueSheet(sheetName);
+            for (int i = 0; i < columnNames.Count(); i++)
+            {
+                sheet.Cells[1, i + 1].Value = columnNames.ElementAt(0);
+            }
             sheet.Cells[2, 1].Value = value;
             package.Save();
         }
