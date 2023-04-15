@@ -29,13 +29,13 @@ namespace DataAgregation.Tools
                     .Join(
                         context.Events,
                         ip => ip.EventId,
-                        e => e.Id,
+                        e => e.EventId,
                         (ip, e) => new { ip.ItemName, ip.Price, UserId = e.UserId }
                     )
                     .Join(
                         context.Users,
                         e => e.UserId,
-                        u => u.Id,
+                        u => u.UserId,
                         (e, u) => new { e.ItemName, e.Price, u.Age }
                     )
                     .GroupBy(e => e.ItemName)
@@ -100,13 +100,13 @@ namespace DataAgregation.Tools
                     .Join(
                         context.Events,
                         cp => cp.EventId,
-                        e => e.Id,
-                        (cp, e) => new { Date = e.Time, Income = cp.Price, UserId = e.UserId }
+                        e => e.EventId,
+                        (cp, e) => new { Date = e.DateTime, Income = cp.Price, UserId = e.UserId }
                     )
                     .Join(
                         context.Users,
                         e => e.UserId,
-                        u => u.Id,
+                        u => u.UserId,
                         (e, u) => new { e.Date, e.Income, u.Age }
                     )
                     .GroupBy(e => e.Date)
@@ -149,13 +149,13 @@ namespace DataAgregation.Tools
                     .Join(
                         context.Events,
                         cp => cp.EventId,
-                        e => e.Id,
-                        (cp, e) => new { Date = e.Time, Income = cp.Price, UserId = e.UserId}
+                        e => e.EventId,
+                        (cp, e) => new { Date = e.DateTime, Income = cp.Price, UserId = e.UserId}
                     )
                     .Join(
                         context.Users,
                         e => e.UserId,
-                        u => u.Id,
+                        u => u.UserId,
                         (e, u) => new { e.Date, e.Income, u.Age }
                     )
                     .GroupBy(e => e.Date)
@@ -190,11 +190,11 @@ namespace DataAgregation.Tools
             var events = await ExecuteInMultiThreadUsingSingleValue((context) =>
             {
                 return context.Events
-                    .Where(e => e.EventIdentifier == 1 && EF.Functions.DateDiffDay(e.Time, lastDate) <= 30)
+                    .Where(e => e.EventType == 1 && EF.Functions.DateDiffDay(e.DateTime, lastDate) <= 30)
                     .Join(
                         context.Users,
                         e => e.UserId,
-                        u => u.Id,
+                        u => u.UserId,
                         (e, u) => new { UserId = e.UserId, Age = u.Age }
                     )
                     .GroupBy(u => 1)
@@ -280,7 +280,7 @@ namespace DataAgregation.Tools
             {
                 return context.IngamePurchases
                     .Include(ip => ip.Event)
-                    .GroupBy(ip => ip.Event.Time)
+                    .GroupBy(ip => ip.Event.DateTime)
                     .Select(g => new ItemsStatiscticByDate
                     {
                         Date = DateOnly.FromDateTime(g.Key),
@@ -307,12 +307,12 @@ namespace DataAgregation.Tools
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
                 return context.Events
-                    .Where(e => e.EventIdentifier == type)
+                    .Where(e => e.EventType == type)
                     .Join(
                         context.Users,
                         e => e.UserId,
-                        u => u.Id,
-                        (e, u) => new { UserId = e.UserId, Age = u.Age, Date = e.Time }
+                        u => u.UserId,
+                        (e, u) => new { UserId = e.UserId, Age = u.Age, Date = e.DateTime }
                     )
                     .GroupBy(e => e.Date)
                     .Select(g => new DateIntervalEnters<int>
@@ -345,9 +345,9 @@ namespace DataAgregation.Tools
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
                 return context.Events
-                    .Where(e => e.EventIdentifier == type)
+                    .Where(e => e.EventType == type)
                     .Include(e => e.User)
-                    .GroupBy(e => e.Time)
+                    .GroupBy(e => e.DateTime)
                     .Select(g => new DateAges
                     {
                         Date = DateOnly.FromDateTime(g.Key),
@@ -372,8 +372,8 @@ namespace DataAgregation.Tools
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
                 return context.Events
-                    .Where(e => e.EventIdentifier == type)
-                    .GroupBy(e => e.Time)
+                    .Where(e => e.EventType == type)
+                    .GroupBy(e => e.DateTime)
                     .Select(g => new DateUsersCount
                     {
                         Date = g.Key.ToShortDateString(),
@@ -401,8 +401,8 @@ namespace DataAgregation.Tools
                     .Join(
                         context.Events,
                         cp => cp.EventId,
-                        e => e.Id,
-                        (cp, e) => new { Date = e.Time, USD = cp.Price, Income = cp.Income }
+                        e => e.EventId,
+                        (cp, e) => new { Date = e.DateTime, USD = cp.Price, Income = cp.Income }
                     )
                     .GroupBy(e => e.Date)
                     .Select(g => new CurrencyRateData
@@ -487,11 +487,11 @@ namespace DataAgregation.Tools
                 return context.IngamePurchases
                     .Join(context.Events,
                         ip => ip.EventId,
-                        e => e.Id,
+                        e => e.EventId,
                         (ip, e) => new
                         {
                             ip.ItemName,
-                            Date = e.Time
+                            Date = e.DateTime
                         })
                     .GroupBy(e => new { e.ItemName, e.Date })
                     .Select(g => new ItemDateCount
@@ -560,11 +560,11 @@ namespace DataAgregation.Tools
                     .Where(se => se.Income != null)
                         .Join(context.Events,
                             se => se.EventId,
-                            e => e.Id,
+                            e => e.EventId,
                             (se, e) => new
                             {
                                 se.Stage,
-                                Date = e.Time
+                                Date = e.DateTime
                             })
                         .GroupBy(ss => new { ss.Stage, ss.Date })
                         .Select(g => new StageDateCount
@@ -595,9 +595,9 @@ namespace DataAgregation.Tools
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
                 return context.Events
-                    .Where(e => e.EventIdentifier == 6)
+                    .Where(e => e.EventType == 6)
                     .Include(e => e.CurrencyPurchases)
-                    .GroupBy(e => e.Time)
+                    .GroupBy(e => e.DateTime)
                     .Select(g => new Revenue
                     {
                         Date = g.Key.ToShortDateString(),
@@ -628,7 +628,7 @@ namespace DataAgregation.Tools
                     using (var context = new DataContext(i))
                     {
                         var result = context.Events
-                            .Where(e => e.EventIdentifier == 1 && EF.Functions.DateDiffDay(e.Time, lastDate) <= 30)
+                            .Where(e => e.EventType == 1 && EF.Functions.DateDiffDay(e.DateTime, lastDate) <= 30)
                             .Select(e => e.UserId)
                             .Distinct()
                             .Count();
@@ -644,7 +644,7 @@ namespace DataAgregation.Tools
         {
             ConcurrentBag<DateTime> dates = await ExecuteInMultiThreadUsingSingleValue((context) =>
             {
-                return context.Events.Max(e => e.Time);
+                return context.Events.Max(e => e.DateTime);
             });
             return dates.Max();
         }
@@ -698,12 +698,12 @@ namespace DataAgregation.Tools
         private async Task AddEventAsync(JObject o, DataContext context)
         {
             int eventTypeIdentifier = o.Value<int>("event_id");
-            if (eventTypeIdentifier == 2 && await context.Users.FirstOrDefaultAsync(u => u.Id == o.Value<string>("udid")) != null) return;
+            if (eventTypeIdentifier == 2 && await context.Users.FirstOrDefaultAsync(u => u.UserId == o.Value<string>("udid")) != null) return;
             var parameters = o.Value<JObject>("parameters");
             Event newEvent = new()
             {
-                EventIdentifier = eventTypeIdentifier,
-                Time = o.Value<DateTime>("date"),
+                EventType = eventTypeIdentifier,
+                DateTime = o.Value<DateTime>("date"),
                 UserId = o.Value<string>("udid"),
             };
             await context.AddAsync(newEvent);
@@ -712,7 +712,7 @@ namespace DataAgregation.Tools
             {
                 User newUser = new()
                 {
-                    Id = o.Value<string>("udid"),
+                    UserId = o.Value<string>("udid"),
                     Gender = parameters.Value<string>("gender"),
                     Country = parameters.ContainsKey("country") ? parameters.Value<string>("country") : null,
                     Age = parameters.Value<int>("age"),

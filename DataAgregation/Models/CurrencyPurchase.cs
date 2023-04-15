@@ -8,7 +8,7 @@ namespace DataAgregation.Models
 {
     public class CurrencyPurchase
     {
-        public int Id { get; set; }
+        public int CurrencyPurchaseId { get; set; }
         public string PackName { get; set; }
         public decimal Price { get; set; }
         public int Income { get; set; }

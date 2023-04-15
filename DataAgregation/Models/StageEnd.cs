@@ -8,7 +8,7 @@ namespace DataAgregation.Models
 {
     public class StageEnd
     {
-        public int Id { get; set; }
+        public int StageEndId { get; set; }
         public int Stage { get; set; }
         public bool IsWon { get; set; }
         public int Time { get; set; }

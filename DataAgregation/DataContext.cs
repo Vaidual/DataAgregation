@@ -10,9 +10,18 @@ namespace DataAgregation
 {
     public class DataContext : DbContext
     {
+        //public DataContext()
+        //{
+        //}
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //{
         //    optionsBuilder.UseSqlServer(@$"Data Source=Vaidual;Initial Catalog=DataAgregation0;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=true");
+        //}
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    modelBuilder.Entity<CurrencyPurchase>()
+        //        .Property(c => c.Price)
+        //        .HasColumnType("decimal(18,2)");
         //}
         public DataContext(int dbIndex) 
         {
@@ -23,6 +32,8 @@ namespace DataAgregation
         {
             optionsBuilder.UseSqlServer(null);
         }
+
+
 
         public DbSet<User> Users { get; set; }
         public DbSet<Event> Events { get; set; }

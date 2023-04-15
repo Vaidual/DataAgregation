@@ -8,9 +8,9 @@ namespace DataAgregation.Models
 {
     public class Event
     {
-        public int Id { get; set; }
-        public int EventIdentifier { get; set; }
-        public DateTime Time { get; set; }
+        public int EventId { get; set; }
+        public int EventType { get; set; }
+        public DateTime DateTime { get; set; }
 
         public string UserId { get; set; }
         public User User { get; set; }

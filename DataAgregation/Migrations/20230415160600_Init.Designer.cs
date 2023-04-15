@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAgregation.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230415123509_Init")]
+    [Migration("20230415160600_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -27,11 +27,11 @@ namespace DataAgregation.Migrations
 
             modelBuilder.Entity("DataAgregation.Models.CurrencyPurchase", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("CurrencyPurchaseId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CurrencyPurchaseId"));
 
                     b.Property<int>("EventId")
                         .HasColumnType("int");
@@ -46,7 +46,7 @@ namespace DataAgregation.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.HasKey("Id");
+                    b.HasKey("CurrencyPurchaseId");
 
                     b.HasIndex("EventId");
 
@@ -55,23 +55,23 @@ namespace DataAgregation.Migrations
 
             modelBuilder.Entity("DataAgregation.Models.Event", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("EventId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventId"));
 
-                    b.Property<int>("EventIdentifier")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Time")
+                    b.Property<DateTime>("DateTime")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                    b.HasKey("EventId");
 
                     b.HasIndex("UserId");
 
@@ -80,11 +80,11 @@ namespace DataAgregation.Migrations
 
             modelBuilder.Entity("DataAgregation.Models.IngamePurchase", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("IngamePurchaseId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IngamePurchaseId"));
 
                     b.Property<int>("EventId")
                         .HasColumnType("int");
@@ -96,7 +96,7 @@ namespace DataAgregation.Migrations
                     b.Property<int>("Price")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("IngamePurchaseId");
 
                     b.HasIndex("EventId");
 
@@ -105,11 +105,11 @@ namespace DataAgregation.Migrations
 
             modelBuilder.Entity("DataAgregation.Models.StageEnd", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("StageEndId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StageEndId"));
 
                     b.Property<int>("EventId")
                         .HasColumnType("int");
@@ -126,7 +126,7 @@ namespace DataAgregation.Migrations
                     b.Property<int>("Time")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("StageEndId");
 
                     b.HasIndex("EventId");
 
@@ -135,11 +135,11 @@ namespace DataAgregation.Migrations
 
             modelBuilder.Entity("DataAgregation.Models.StageStart", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("StageStartId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StageStartId"));
 
                     b.Property<int>("EventId")
                         .HasColumnType("int");
@@ -147,7 +147,7 @@ namespace DataAgregation.Migrations
                     b.Property<int>("Stage")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("StageStartId");
 
                     b.HasIndex("EventId");
 
@@ -156,7 +156,7 @@ namespace DataAgregation.Migrations
 
             modelBuilder.Entity("DataAgregation.Models.User", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Age")
@@ -169,7 +169,7 @@ namespace DataAgregation.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId");
 
                     b.ToTable("Users");
                 });
