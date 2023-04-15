@@ -11,6 +11,6 @@ namespace DataAgregation.ClusterModels
         public string ItemName { get; set; }
         public List<int> Amount { get; set; }
         public List<int> Income { get; set; }
-        public decimal USD { get; set; }
+        public List<decimal> USD { get; set; }
     }
 }

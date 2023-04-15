@@ -23,13 +23,13 @@ namespace DataAgregation.Tools
             package = new ExcelPackage(path);
         }
 
-        internal async Task WriteDAUWithAgeClusters(IEnumerable<AgeInterval> intervals)
+        internal async Task WriteDAUWithAgeClusters(IEnumerable<Interval> intervals)
         {
             string[] colunsHeaders = new string[5];
             colunsHeaders[0] = "Date";
             for (int i = 0; i < intervals.Count(); i++)
             {
-                colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
+                colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinValue}-{intervals.ElementAt(i).MaxValue}";
             }
             var data = await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals);
             WriteInExcel(
@@ -50,7 +50,7 @@ namespace DataAgregation.Tools
             colunsHeaders[0] = "Date";
             for (int i = 0; i < intervals.Count(); i++)
             {
-                colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
+                colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinValue}-{intervals.ElementAt(i).MaxValue}";
             }
 
             Dictionary<DateOnly, IEnumerable<int>> result = new();

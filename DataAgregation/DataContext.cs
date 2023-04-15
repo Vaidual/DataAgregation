@@ -33,8 +33,6 @@ namespace DataAgregation
             optionsBuilder.UseSqlServer(null);
         }
 
-
-
         public DbSet<User> Users { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<CurrencyPurchase> CurrencyPurchases { get; set; }

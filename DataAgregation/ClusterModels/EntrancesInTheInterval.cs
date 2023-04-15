@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace DataAgregation.ClusterModels
 {
-    public class AgeInterval
+    public class EntrancesInTheInterval
     {
-        public int MinAge { get; set; }
-        public int MaxAge { get; set; }
+        public Interval Interval { get; set; }
+        public int NumberOfEntrances { get; set; }
     }
 }

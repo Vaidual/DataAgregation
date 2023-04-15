@@ -53,7 +53,7 @@ using (ExcelHandler excelHandler = new ExcelHandler("../../../age-clusters.xlsx"
     string[] intervalHeaders = new string[4];
     for (int i = 0; i < intervals.Count(); i++)
     {
-        intervalHeaders[i] = $"{intervals.ElementAt(i).MinAge}-{intervals.ElementAt(i).MaxAge}";
+        intervalHeaders[i] = $"{intervals.ElementAt(i).MinValue}-{intervals.ElementAt(i).MaxValue}";
     }
     //excelHandler.WriteInExcel(
     //    "DAU",
@@ -73,13 +73,44 @@ using (ExcelHandler excelHandler = new ExcelHandler("../../../age-clusters.xlsx"
     //    await dBHandler.GetMauByAgeAsync(intervals));
     excelHandler.WriteInExcel(
         "Items Statistic",
-        new string[][] 
-        {  
+        new string[][]
+        {
             new string[] { "Item"},
             new string[] { "Amount" }.Concat(intervalHeaders).ToArray(),
             new string[] { "Income" }.Concat(intervalHeaders).ToArray(),
-            new string[] { "USD"},
+            new string[] { "USD" }.Concat(intervalHeaders).ToArray(),
 
         },
         await dBHandler.GetItemsStatisticByAge(intervals));
+
+    //var items = await dBHandler.GetItemsStatisticWithAges();
+    //var enterances = new List<EntrancesInTheInterval>();
+    //var result = new List<ItemStatisticWithIntervals>();
+    //foreach (var item in items) 
+    //{
+    //    decimal[] prop = new decimal[intervals.Count()];
+    //    for (int i = 0; i < intervals.Count(); i++)
+    //    {
+    //        var hoeMany = (decimal)item.Values.Count(e => e >= intervals.ElementAt(i).MinValue && e <= intervals.ElementAt(i).MaxValue);
+    //        prop[i] = hoeMany / item.Values.Count();
+    //    }
+    //    result.Add(new ItemStatisticWithIntervals
+    //    {
+    //        ItemName = item.Item,
+    //        USD = item.USD,
+    //        Amount = prop.Select(x => (int)(x * item.Amount)).ToList(),
+    //        Income = prop.Select(x => (int)(x * item.Income)).ToList()
+    //    });
+    //}
+    //excelHandler.WriteInExcel(
+    //"Items Statistic",
+    //new string[][]
+    //{
+    //        new string[] { "Item"},
+    //        new string[] { "Amount" }.Concat(intervalHeaders).ToArray(),
+    //        new string[] { "Income" }.Concat(intervalHeaders).ToArray(),
+    //        new string[] { "USD"},
+
+    //},
+    //result);
 }
