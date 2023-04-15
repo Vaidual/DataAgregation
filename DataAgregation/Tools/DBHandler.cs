@@ -397,15 +397,19 @@ namespace DataAgregation.Tools
         {
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
-                return context.Events
-                    .Where(e => e.EventIdentifier == 6)
-                    .Include(e => e.CurrencyPurchases)
-                    .GroupBy(e => e.Time)
+                return context.CurrencyPurchases
+                    .Join(
+                        context.Events,
+                        cp => cp.EventId,
+                        e => e.Id,
+                        (cp, e) => new { Date = e.Time, USD = cp.Price, Income = cp.Income }
+                    )
+                    .GroupBy(e => e.Date)
                     .Select(g => new CurrencyRateData
                     {
                         Date = DateOnly.FromDateTime(g.Key),
-                        Income = g.SelectMany(e => e.CurrencyPurchases).Sum(cp => cp.Price),
-                        BoughtCurrency = g.SelectMany(e => e.CurrencyPurchases).Sum(cp => cp.Income),
+                        Income = g.Sum(e => e.USD),
+                        BoughtCurrency = g.Sum(e => e.Income),
                     });
             });
             var mergedEvents = events

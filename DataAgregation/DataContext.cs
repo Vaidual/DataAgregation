@@ -10,6 +10,10 @@ namespace DataAgregation
 {
     public class DataContext : DbContext
     {
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    optionsBuilder.UseSqlServer(@$"Data Source=Vaidual;Initial Catalog=DataAgregation0;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=true");
+        //}
         public DataContext(int dbIndex) 
         {
             Database.SetConnectionString(@$"Data Source=Vaidual;Initial Catalog=DataAgregation{dbIndex};Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=true");

@@ -90,3 +90,7 @@ D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\runtimes\osx-a
 D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\runtimes\osx-x64\native\libLdaNative.dylib
 D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\runtimes\win-x64\native\LdaNative.dll
 D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\runtimes\win-x86\native\LdaNative.dll
+D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\Humanizer.dll
+D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\Microsoft.EntityFrameworkCore.Design.dll
+D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\Microsoft.Extensions.DependencyModel.dll
+D:\projects\dotNet\DataAgregation\DataAgregation\bin\Debug\net7.0\Mono.TextTemplating.dll
