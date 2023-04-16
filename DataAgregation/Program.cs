@@ -21,7 +21,7 @@ using static Microsoft.IO.RecyclableMemoryStreamManager;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 const string dataDirPath = "../../../data";
-const string excelFilePath = "../../../events_data.xlsx";
+const string excelFilePath = "../../../output/events_data.xlsx";
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 DBHandler dBHandler = new DBHandler();
@@ -32,85 +32,114 @@ DBHandler dBHandler = new DBHandler();
 //}
 
 
-using (ExcelHandler excelHandler = new ExcelHandler(excelFilePath))
-{
-    //await excelHandler.WriteDAUAsync();
-    //await excelHandler.WriteNewUsersAsync();
-    //await excelHandler.WriteMAUAsync();
-    //await excelHandler.WriteRevenueAsync();
-    //await excelHandler.WriteCurrencyRate();
-    //await excelHandler.WriteStageStatistic();
-    //await excelHandler.WriteItemsStatistic();
-    //await excelHandler.WriteItemsByDateStatistic();
-}
+//using (ExcelHandler excelHandler = new ExcelHandler(excelFilePath))
+//{
+//    await excelHandler.WriteDAUAsync();
+//    await excelHandler.WriteNewUsersAsync();
+//    await excelHandler.WriteMAUAsync();
+//    await excelHandler.WriteRevenueAsync();
+//    await excelHandler.WriteCurrencyRate();
+//    await excelHandler.WriteStageStatistic();
+//    await excelHandler.WriteItemsStatistic();
+//    await excelHandler.WriteItemsByDateStatistic();
+//}
 
-using (ExcelHandler excelHandler = new ExcelHandler("../../../age-clusters.xlsx"))
-{
-    var ages = await dBHandler.GetUserAges();
-    ClasterMaker clasterMaker = new ClasterMaker();
-    var intervals = clasterMaker.FindAgeIntervals(ages);
+//using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/age-clusters.xlsx"))
+//{
+//    var ages = await dBHandler.GetUserAges();
+//    ClasterMaker clasterMaker = new ClasterMaker();
+//    var intervals = clasterMaker.FindAgeIntervals(ages);
 
-    string[] intervalHeaders = new string[4];
-    for (int i = 0; i < intervals.Count(); i++)
-    {
-        intervalHeaders[i] = $"{intervals.ElementAt(i).MinValue}-{intervals.ElementAt(i).MaxValue}";
-    }
-    //excelHandler.WriteInExcel(
-    //    "DAU",
-    //    new string[] { "ItemName" + intervalHeaders },
-    //    await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals));
+//    string[] intervalHeaders = new string[4];
+//    for (int i = 0; i < intervals.Count(); i++)
+//    {
+//        intervalHeaders[i] = $"{intervals.ElementAt(i).MinValue}-{intervals.ElementAt(i).MaxValue}";
+//    }
+//    excelHandler.WriteInExcel(
+//        "DAU",
+//        intervalHeaders.Prepend("ItemName").ToArray(),
+//        await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals));
+//    excelHandler.WriteInExcel(
+//        "New Users",
+//        intervalHeaders.Prepend("ItemName").ToArray(),
+//        await dBHandler.GetAgeStatisticByEventTypeAsync(2, intervals));
+//    excelHandler.WriteInExcel(
+//        "Revenue",
+//        intervalHeaders.Prepend("ItemName").ToArray(),
+//        await dBHandler.GetRevenuebyAgeAsync2(intervals));
+//    excelHandler.WriteInExcel(
+//        "MAU",
+//        intervalHeaders,
+//        await dBHandler.GetMauByAgeAsync(intervals));
+//    excelHandler.WriteInExcel(
+//        "Items Statistic",
+//        new string[][]
+//        {
+//            new string[] { "Item"},
+//            intervalHeaders.Prepend("Amount").ToArray(),
+//            intervalHeaders.Prepend("Income").ToArray(),
+//            intervalHeaders.Prepend("USD").ToArray(),
+//        },
+//        await dBHandler.GetItemsStatisticByAge(intervals));
+//    excelHandler.WriteInExcel(
+//        "Stages Statistic",
+//        new string[][]
+//        {
+//            new string[] { "Stage"},
+//            intervalHeaders.Prepend("Starts").ToArray(),
+//            intervalHeaders.Prepend("Ends").ToArray(),
+//            intervalHeaders.Prepend("Wins").ToArray(),
+//            intervalHeaders.Prepend("Income").ToArray(),
+//            intervalHeaders.Prepend("USD").ToArray(),
+
+//        },
+//        await dBHandler.GetStageStatisticByAgeAsync(intervals));
+//}
+
+using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/gender-clusters.xlsx"))
+{
+    var genderTypes = await GenderService.GetGenderTypes();
+    excelHandler.WriteInExcel(
+        "DAU",
+        genderTypes.Prepend("Date").ToArray(),
+        await GenderService.GetGenderStatisticByEventTypeAsync(1));
+
     //excelHandler.WriteInExcel(
     //    "New Users",
-    //    new string[] { "ItemName" + intervalHeaders },
-    //    await dBHandler.GetAgeStatisticByEventTypeAsync(2, intervals));
+    //    genderTypes.Prepend("Date").ToArray(),
+    //    await GenderService.GetGenderStatisticByEventTypeAsync(2));
+
     //excelHandler.WriteInExcel(
     //    "Revenue",
-    //    new string[] { "ItemName" + intervalHeaders },
-    //    await dBHandler.GetRevenuebyAgeAsync2(intervals));
+    //    genderTypes.Prepend("ItemName").ToArray(),
+    //    await GenderService.GetRevenuebyGenderAsync());
+
     //excelHandler.WriteInExcel(
     //    "MAU",
-    //    intervalHeaders,
-    //    await dBHandler.GetMauByAgeAsync(intervals));
-    excelHandler.WriteInExcel(
-        "Items Statistic",
-        new string[][]
-        {
-            new string[] { "Item"},
-            new string[] { "Amount" }.Concat(intervalHeaders).ToArray(),
-            new string[] { "Income" }.Concat(intervalHeaders).ToArray(),
-            new string[] { "USD" }.Concat(intervalHeaders).ToArray(),
+    //    genderTypes,
+    //    await GenderService.GetMauByGenderAsync());
+    //    excelHandler.WriteInExcel(
+    //        "Items Statistic",
+    //        new string[][]
+    //        {
+    //            new string[] { "Item"},
+    //            intervalHeaders.Prepend("Amount").ToArray(),
+    //            intervalHeaders.Prepend("Income").ToArray(),
+    //            intervalHeaders.Prepend("USD").ToArray(),
+    //        },
+    //        await GenderService.GetItemsStatisticByAge(intervals));
+    //    excelHandler.WriteInExcel(
+    //        "Stages Statistic",
+    //        new string[][]
+    //        {
+    //            new string[] { "Stage"},
+    //            intervalHeaders.Prepend("Starts").ToArray(),
+    //            intervalHeaders.Prepend("Ends").ToArray(),
+    //            intervalHeaders.Prepend("Wins").ToArray(),
+    //            intervalHeaders.Prepend("Income").ToArray(),
+    //            intervalHeaders.Prepend("USD").ToArray(),
 
-        },
-        await dBHandler.GetItemsStatisticByAge(intervals));
+    //        },
+    //        await GenderService.GetStageStatisticByAgeAsync(intervals));
 
-    //var items = await dBHandler.GetItemsStatisticWithAges();
-    //var enterances = new List<EntrancesInTheInterval>();
-    //var result = new List<ItemStatisticWithIntervals>();
-    //foreach (var item in items) 
-    //{
-    //    decimal[] prop = new decimal[intervals.Count()];
-    //    for (int i = 0; i < intervals.Count(); i++)
-    //    {
-    //        var hoeMany = (decimal)item.Values.Count(e => e >= intervals.ElementAt(i).MinValue && e <= intervals.ElementAt(i).MaxValue);
-    //        prop[i] = hoeMany / item.Values.Count();
-    //    }
-    //    result.Add(new ItemStatisticWithIntervals
-    //    {
-    //        ItemName = item.Item,
-    //        USD = item.USD,
-    //        Amount = prop.Select(x => (int)(x * item.Amount)).ToList(),
-    //        Income = prop.Select(x => (int)(x * item.Income)).ToList()
-    //    });
-    //}
-    //excelHandler.WriteInExcel(
-    //"Items Statistic",
-    //new string[][]
-    //{
-    //        new string[] { "Item"},
-    //        new string[] { "Amount" }.Concat(intervalHeaders).ToArray(),
-    //        new string[] { "Income" }.Concat(intervalHeaders).ToArray(),
-    //        new string[] { "USD"},
-
-    //},
-    //result);
 }

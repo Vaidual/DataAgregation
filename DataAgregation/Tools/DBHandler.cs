@@ -21,6 +21,119 @@ namespace DataAgregation.Tools
     {
         const int maxDb = 8;
 
+        public async Task<List<StageStatisticWithIntervals>> GetStageStatisticByAgeAsync(IEnumerable<Interval> intervals)
+        {
+            var events = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                var Ends = context.StageEnds
+                    .Join(
+                        context.Events,
+                        se => se.EventId,
+                        e => e.EventId,
+                        (ss, e) => new { ss.Stage, ss.IsWon, ss.Income, UserId = e.UserId }
+                    )
+                    .Join(
+                        context.Users,
+                        e => e.UserId,
+                        u => u.UserId,
+                        (ss, u) => new { ss.Stage, ss.IsWon, ss.Income, u.Age }
+                    )
+                    .GroupBy(se => se.Stage)
+                    .AsEnumerable()
+                    .Select(g =>
+                    {
+                        return new
+                        {
+                            Stage = g.Key,
+                            Wins = intervals
+                            .Select(i => g
+                                .Where(e => e.Age >= i.MinValue && e.Age <= i.MaxValue)
+                                .Count(se => se.IsWon))
+                            .ToList(),
+                            Income = intervals
+                            .Select(i => g
+                                .Where(e => e.Age >= i.MinValue && e.Age <= i.MaxValue)
+                                .Sum(se => (int)se.Income))
+                            .ToList(),
+                            Ends = intervals
+                            .Select(i => g
+                                .Where(e => e.Age >= i.MinValue && e.Age <= i.MaxValue)
+                                .Count())
+                            .ToList()
+                        };
+                    });
+                var Starts = context.StageStarts
+                    .Join(
+                        context.Events,
+                        ss => ss.EventId,
+                        e => e.EventId,
+                        (ss, e) => new { ss.Stage, UserId = e.UserId }
+                    )
+                    .Join(
+                        context.Users,
+                        e => e.UserId,
+                        u => u.UserId,
+                        (e, u) => new { e.Stage, u.Age }
+                    )
+                    .GroupBy(ss => ss.Stage)
+                    .AsEnumerable()
+                    .Select(g => new
+                    {
+                        Stage = g.Key,
+                        Starts = intervals
+                            .Select(i => g
+                                .Where(e => e.Age >= i.MinValue && e.Age <= i.MaxValue)
+                                .Count())
+                        .ToList()
+                    });
+                return Starts.Join(
+                    Ends,
+                    ss => ss.Stage,
+                    se => se.Stage,
+                    (ss, se) => new StageStatisticWithIntervals
+                    {
+                        Stage = ss.Stage,
+                        Starts = ss.Starts,
+                        Ends = se.Ends,
+                        Wins = se.Wins,
+                        Income = se.Income,
+                    });
+            });
+            var mergedStageStats = events
+                .GroupBy(e => e.Stage)
+                .Select(g => new StageStatisticWithIntervals
+                {
+                    Stage = g.Key,
+                    Starts = Enumerable
+                        .Range(0, intervals.Count())
+                        .Select(i => g.Select(e => e.Starts).Sum(list => list[i]))
+                        .ToList(),
+                    Ends = Enumerable
+                        .Range(0, intervals.Count())
+                        .Select(i => g.Select(e => e.Ends).Sum(list => list[i]))
+                        .ToList(),
+                    Wins = Enumerable
+                        .Range(0, intervals.Count())
+                        .Select(i => g.Select(e => e.Wins).Sum(list => list[i]))
+                        .ToList(),
+                    Income = Enumerable
+                        .Range(0, intervals.Count())
+                        .Select(i => g.Select(e => e.Income).Sum(list => list[i]))
+                        .ToList(),
+                })
+                .OrderBy(e => e.Stage)
+                .ToList();
+            List<StageDateCount> stageDateCounts = await GetStageDateCountAsync();
+            List<CurrencyRate> rate = await GetCurrencyRateAsync();
+            foreach (var stageStat in mergedStageStats)
+            {
+                var dates = stageDateCounts.Where(e => e.Stage == stageStat.Stage);
+                decimal coef = dates.Sum(d => d.Count * rate.First(r => r.Date == DateOnly.FromDateTime(d.Date)).Rate / dates.Sum(d => d.Count));
+                stageStat.USD = stageStat.Income.Select(x => x * coef).ToList();
+            }
+            return mergedStageStats;
+        }
+
         public async Task<List<ItemStatisticWithValues<int>>> GetItemsStatisticWithAges()
         {
             var events = await ExecuteInMultiThreadUsingList((context) =>
@@ -113,21 +226,14 @@ namespace DataAgregation.Tools
                     {
                         ItemName = g.Key,
                         Amount = Enumerable
-                            .Range(0, g.Select(e => e.Amount).First().Count)
+                            .Range(0, intervals.Count())
                             .Select(i => g.Select(e => e.Amount).Sum(list => list[i]))
                             .ToList(),
                         Income = Enumerable
-                            .Range(0, g.Select(e => e.Income).First().Count)
+                            .Range(0, intervals.Count())
                             .Select(i => g.Select(e => e.Income).Sum(list => list[i]))
                             .ToList(),
-                        //Income = new List<int>(),
-                        //Amount = new List<int>(),
                     };
-                    //for (int i = 0; i < intervals.Count(); i++)
-                    //{
-                    //    result.Amount.Add(g.Sum(e => e.Amount[i]));
-                    //    result.Income.Add(g.Sum(e => e.Income[i]));
-                    //}
                     return result;
                 })
                 .OrderBy(e => e.ItemName)
@@ -193,53 +299,10 @@ namespace DataAgregation.Tools
             return mergedEvents;
         }
 
-        public async Task<List<DateIntervalEnters<decimal>>> GetRevenuebyAgeAsync(IEnumerable<Interval> intervals)
-        {
-            var events = await ExecuteInMultiThreadUsingList((context) =>
-            {
-                return context.CurrencyPurchases
-                    .Join(
-                        context.Events,
-                        cp => cp.EventId,
-                        e => e.EventId,
-                        (cp, e) => new { Date = e.DateTime, Income = cp.Price, UserId = e.UserId}
-                    )
-                    .Join(
-                        context.Users,
-                        e => e.UserId,
-                        u => u.UserId,
-                        (e, u) => new { e.Date, e.Income, u.Age }
-                    )
-                    .GroupBy(e => e.Date)
-                    .Select(g => new DateIntervalEnters<decimal>
-                    {
-                        Date = DateOnly.FromDateTime(g.Key),
-                        IntervalEnters1 = g.Where(e => e.Age >= intervals.ElementAt(0).MinValue && e.Age <= intervals.ElementAt(0).MaxValue).Sum(e => e.Income),
-                        IntervalEnters2 = g.Where(e => e.Age >= intervals.ElementAt(1).MinValue && e.Age <= intervals.ElementAt(1).MaxValue).Sum(e => e.Income),
-                        IntervalEnters3 = g.Where(e => e.Age >= intervals.ElementAt(2).MinValue && e.Age <= intervals.ElementAt(2).MaxValue).Sum(e => e.Income),
-                        IntervalEnters4 = g.Where(e => e.Age >= intervals.ElementAt(3).MinValue && e.Age <= intervals.ElementAt(3).MaxValue).Sum(e => e.Income),
-                    });
-            });
-            var mergedEvents = events
-                .GroupBy(e => e.Date)
-                .Select(g => new DateIntervalEnters<decimal>
-                {
-                    Date = g.Key,
-                    IntervalEnters1 = g.Sum(e => e.IntervalEnters1),
-                    IntervalEnters2 = g.Sum(e => e.IntervalEnters2),
-                    IntervalEnters3 = g.Sum(e => e.IntervalEnters3),
-                    IntervalEnters4 = g.Sum(e => e.IntervalEnters4),
-                })
-                .OrderBy(e => e.Date)
-                .ToList();
-
-            return mergedEvents;
-        }
-
-        public async Task<MauIntervalEnters> GetMauByAgeAsync(IEnumerable<Interval> intervals)
+        public async Task<List<int>> GetMauByAgeAsync(IEnumerable<Interval> intervals)
         {
             DateTime lastDate = await GetDateOfLastEventAsync();
-            var events = await ExecuteInMultiThreadUsingSingleValue((context) =>
+            var stats = await DBHandler.ExecuteInMultiThreadUsingSingleValue((context) =>
             {
                 return context.Events
                     .Where(e => e.EventType == 1 && EF.Functions.DateDiffDay(e.DateTime, lastDate) <= 30)
@@ -247,26 +310,22 @@ namespace DataAgregation.Tools
                         context.Users,
                         e => e.UserId,
                         u => u.UserId,
-                        (e, u) => new { UserId = e.UserId, Age = u.Age }
+                        (e, u) => new { UserId = e.UserId, Gender = u.Gender }
                     )
-                    .GroupBy(u => 1)
-                    .Select(g => new MauIntervalEnters
-                    {
-                        IntervalEnters1 = g.Where(e => e.Age >= intervals.ElementAt(0).MinValue && e.Age <= intervals.ElementAt(0).MaxValue).Select(e => e.UserId).Distinct().Count(),
-                        IntervalEnters2 = g.Where(e => e.Age >= intervals.ElementAt(1).MinValue && e.Age <= intervals.ElementAt(1).MaxValue).Select(e => e.UserId).Distinct().Count(),
-                        IntervalEnters3 = g.Where(e => e.Age >= intervals.ElementAt(2).MinValue && e.Age <= intervals.ElementAt(2).MaxValue).Select(e => e.UserId).Distinct().Count(),
-                        IntervalEnters4 = g.Where(e => e.Age >= intervals.ElementAt(3).MinValue && e.Age <= intervals.ElementAt(3).MaxValue).Select(e => e.UserId).Distinct().Count(),
-                    })
-                    .Single();
+                    .GroupBy(e => e.Gender)
+                    .OrderBy(g => g.Key)
+                    .Select(g => g
+                        .Select(e => e.UserId)
+                        .Distinct()
+                        .Count());
             });
 
-            return new MauIntervalEnters
-            {
-                IntervalEnters1 = events.Sum(e => e.IntervalEnters1),
-                IntervalEnters2 = events.Sum(e => e.IntervalEnters2),
-                IntervalEnters3 = events.Sum(e => e.IntervalEnters3),
-                IntervalEnters4 = events.Sum(e => e.IntervalEnters4),
-            };
+            var mergedStats = Enumerable
+                .Range(0, stats.First().Count())
+                .Select(i => stats.Sum(list => list.ElementAt(i)))
+                .ToList();
+
+            return mergedStats;
         }
 
         public async Task<IEnumerable<ClusterInput>> GetUserAges()
@@ -278,7 +337,7 @@ namespace DataAgregation.Tools
             return result;
         }
 
-        private async Task<ConcurrentBag<T>> ExecuteInMultiThreadUsingSingleValue<T>(Func<DataContext, T> func)
+        internal static async Task<ConcurrentBag<T>> ExecuteInMultiThreadUsingSingleValue<T>(Func<DataContext, T> func)
         {
             var result = new ConcurrentBag<T>();
             Task[] tasks = new Task[maxDb];
@@ -286,12 +345,13 @@ namespace DataAgregation.Tools
             {
                 for (int i = 0; i < maxDb; i++)
                 {
-                    tasks[i] = await Task.Factory.StartNew(async () =>
+                    int iter = i;
+                    tasks[iter] = await Task.Factory.StartNew(async () =>
                     {
-                        using (var context = new DataContext(i))
+                        using (var context = new DataContext(iter))
                         {
                             T data = func(context);
-                            Console.WriteLine($"Data from database {i}: {data}");
+                            Console.WriteLine($"Data from database {iter}: {data}");
                             result.Add(data);
                         }
                     });
@@ -303,18 +363,19 @@ namespace DataAgregation.Tools
                 Console.WriteLine(e.Message);
             }
 
-            return result;
+            return new ConcurrentBag<T>(result);
         }
 
-        private async Task<ConcurrentBag<T>> ExecuteInMultiThreadUsingList<T>(Func<DataContext, IEnumerable<T>> func)
+        internal static async Task<ConcurrentBag<T>> ExecuteInMultiThreadUsingList<T>(Func<DataContext, IEnumerable<T>> func)
         {
             var result = new ConcurrentBag<T>();
             Task[] tasks = new Task[maxDb];
             for (int i = 0; i < maxDb; i++)
             {
-                tasks[i] = await Task.Factory.StartNew( async() =>
+                int iter = i;
+                tasks[iter] = await Task.Factory.StartNew( async() =>
                 {
-                    using (var context = new DataContext(i))
+                    using (var context = new DataContext(iter))
                     {
                         IEnumerable<T> data = func(context);
                         foreach (var e in data) result.Add(e);
@@ -692,7 +753,7 @@ namespace DataAgregation.Tools
             return lastMonthUsersCount;
         }
 
-        public async Task<DateTime> GetDateOfLastEventAsync()
+        public static async Task<DateTime> GetDateOfLastEventAsync()
         {
             ConcurrentBag<DateTime> dates = await ExecuteInMultiThreadUsingSingleValue((context) =>
             {

@@ -210,6 +210,11 @@ namespace DataAgregation.Tools
             {
                 var obj = data[i];
                 int col = 1;
+                if (obj.GetType().IsValueType)
+                {
+                    sheet.Cells[2, i + 1].Value = obj;
+                    continue;
+                }
                 for (int j = 0; j < obj.GetType().GetProperties().Count(); j++)
                 {
                     var prop = obj.GetType().GetProperties()[j];
