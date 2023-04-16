@@ -506,7 +506,7 @@ namespace DataAgregation.Tools
             return mergedEvents;
         }
 
-        public async Task<List<CurrencyRate>> GetCurrencyRateAsync()
+        public static async Task<List<CurrencyRate>> GetCurrencyRateAsync()
         {
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
@@ -593,7 +593,7 @@ namespace DataAgregation.Tools
             return mergedEvents;
         }
 
-        private async Task<List<ItemDateCount>> GetItemDateCountAsync()
+        internal static async Task<List<ItemDateCount>> GetItemDateCountAsync()
         {
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {
@@ -665,7 +665,7 @@ namespace DataAgregation.Tools
             return mergedEvents;
         }
 
-        public async Task<List<StageDateCount>> GetStageDateCountAsync()
+        internal static async Task<List<StageDateCount>> GetStageDateCountAsync()
         {
             var events = await ExecuteInMultiThreadUsingList((context) =>
             {

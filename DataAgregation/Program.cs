@@ -96,50 +96,99 @@ DBHandler dBHandler = new DBHandler();
 //        await dBHandler.GetStageStatisticByAgeAsync(intervals));
 //}
 
-using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/gender-clusters.xlsx"))
+//using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/gender-clusters.xlsx"))
+//{
+//    var genderTypes = await GenderService.GetGenderTypes();
+//    GenderService.SortedDistinctGenders = genderTypes;
+//    excelHandler.WriteInExcel(
+//        "DAU",
+//        genderTypes.Prepend("Date").ToArray(),
+//        await GenderService.GetGenderStatisticByEventTypeAsync(1));
+
+//    excelHandler.WriteInExcel(
+//        "New Users",
+//        genderTypes.Prepend("Date").ToArray(),
+//        await GenderService.GetGenderStatisticByEventTypeAsync(2));
+
+//    excelHandler.WriteInExcel(
+//        "Revenue",
+//        genderTypes.Prepend("ItemName").ToArray(),
+//        await GenderService.GetRevenuebyGenderAsync());
+
+//    excelHandler.WriteInExcel(
+//        "MAU",
+//        genderTypes,
+//        await GenderService.GetMauByGenderAsync());
+//    excelHandler.WriteInExcel(
+//        "Items Statistic",
+//        new string[][]
+//        {
+//                new string[] { "Item"},
+//                genderTypes.Prepend("Amount").ToArray(),
+//                genderTypes.Prepend("Income").ToArray(),
+//                genderTypes.Prepend("USD").ToArray(),
+//        },
+//        await GenderService.GetItemsStatisticByGender());
+//    excelHandler.WriteInExcel(
+//        "Stages Statistic",
+//        new string[][]
+//        {
+//                new string[] { "Stage"},
+//                genderTypes.Prepend("Starts").ToArray(),
+//                genderTypes.Prepend("Ends").ToArray(),
+//                genderTypes.Prepend("Wins").ToArray(),
+//                genderTypes.Prepend("Income").ToArray(),
+//                genderTypes.Prepend("USD").ToArray(),
+
+//        },
+//        await GenderService.GetStageStatisticByGenderAsync());
+//}
+
+using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/country-clusters.xlsx"))
 {
-    var genderTypes = await GenderService.GetGenderTypes();
+    var countryTypes = await CountryService.GetCountryTypes();
+    CountryService.SortedDistinctCountries = countryTypes;
     excelHandler.WriteInExcel(
         "DAU",
-        genderTypes.Prepend("Date").ToArray(),
-        await GenderService.GetGenderStatisticByEventTypeAsync(1));
+        countryTypes.Prepend("Date").ToArray(),
+        await CountryService.GetCountryStatisticByEventTypeAsync(1));
 
-    //excelHandler.WriteInExcel(
-    //    "New Users",
-    //    genderTypes.Prepend("Date").ToArray(),
-    //    await GenderService.GetGenderStatisticByEventTypeAsync(2));
+    excelHandler.WriteInExcel(
+        "New Users",
+        countryTypes.Prepend("Date").ToArray(),
+        await CountryService.GetCountryStatisticByEventTypeAsync(2));
 
-    //excelHandler.WriteInExcel(
-    //    "Revenue",
-    //    genderTypes.Prepend("ItemName").ToArray(),
-    //    await GenderService.GetRevenuebyGenderAsync());
+    excelHandler.WriteInExcel(
+        "Revenue",
+        countryTypes.Prepend("ItemName").ToArray(),
+        await CountryService.GetRevenuebyCountryAsync());
 
-    //excelHandler.WriteInExcel(
-    //    "MAU",
-    //    genderTypes,
-    //    await GenderService.GetMauByGenderAsync());
-    //    excelHandler.WriteInExcel(
-    //        "Items Statistic",
-    //        new string[][]
-    //        {
-    //            new string[] { "Item"},
-    //            intervalHeaders.Prepend("Amount").ToArray(),
-    //            intervalHeaders.Prepend("Income").ToArray(),
-    //            intervalHeaders.Prepend("USD").ToArray(),
-    //        },
-    //        await GenderService.GetItemsStatisticByAge(intervals));
-    //    excelHandler.WriteInExcel(
-    //        "Stages Statistic",
-    //        new string[][]
-    //        {
-    //            new string[] { "Stage"},
-    //            intervalHeaders.Prepend("Starts").ToArray(),
-    //            intervalHeaders.Prepend("Ends").ToArray(),
-    //            intervalHeaders.Prepend("Wins").ToArray(),
-    //            intervalHeaders.Prepend("Income").ToArray(),
-    //            intervalHeaders.Prepend("USD").ToArray(),
+    excelHandler.WriteInExcel(
+        "MAU",
+        countryTypes,
+        await CountryService.GetMauByCountryAsync());
+    excelHandler.WriteInExcel(
+        "Items Statistic",
+        new string[][]
+        {
+                new string[] { "Item"},
+                countryTypes.Prepend("Amount").ToArray(),
+                countryTypes.Prepend("Income").ToArray(),
+                countryTypes.Prepend("USD").ToArray(),
+        },
+        await CountryService.GetItemsStatisticByCountry());
+    excelHandler.WriteInExcel(
+        "Stages Statistic",
+        new string[][]
+        {
+                new string[] { "Stage"},
+                countryTypes.Prepend("Starts").ToArray(),
+                countryTypes.Prepend("Ends").ToArray(),
+                countryTypes.Prepend("Wins").ToArray(),
+                countryTypes.Prepend("Income").ToArray(),
+                countryTypes.Prepend("USD").ToArray(),
 
-    //        },
-    //        await GenderService.GetStageStatisticByAgeAsync(intervals));
+        },
+        await CountryService.GetStageStatisticByCountryAsync());
 
 }

@@ -104,7 +104,7 @@ namespace DataAgregation.Tools
 
         internal async Task WriteCurrencyRate()
         {
-            var currencyRate = await dBHandler.GetCurrencyRateAsync();
+            var currencyRate = await DBHandler.GetCurrencyRateAsync();
             WriteInExcel(
                 "Currency Rate",
                 new string[] { "Date", "Rate" },

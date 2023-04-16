@@ -10,22 +10,22 @@ using System.Threading.Tasks;
 
 namespace DataAgregation.Tools
 {
-    static public class GenderService
+    static public class CountryService
     {
-        public static string[] SortedDistinctGenders = Array.Empty<string>();
+        public static string?[] SortedDistinctCountries = Array.Empty<string?>();
 
-        public static async Task<string[]> GetGenderTypes()
+        public static async Task<string?[]> GetCountryTypes()
         {
-            var genders = await DBHandler.ExecuteInMultiThreadUsingList((context) =>
+            var Countries = await DBHandler.ExecuteInMultiThreadUsingList((context) =>
             {
-                return context.Users.Select(u => u.Gender);
+                return context.Users.Select(u => u.Country);
             });
-            var mergedGenders = genders.Distinct().Order().ToArray();
+            var mergedCountries = Countries.Distinct().Order().ToArray();
 
-            return mergedGenders;
+            return mergedCountries;
         }
 
-        public static async Task<List<DateListIntervalEnters<int>>> GetGenderStatisticByEventTypeAsync(int type)
+        public static async Task<List<DateListIntervalEnters<int>>> GetCountryStatisticByEventTypeAsync(int type)
         {
             var stats = await DBHandler.ExecuteInMultiThreadUsingList((context) =>
             {
@@ -38,7 +38,7 @@ namespace DataAgregation.Tools
                         (e, u) => new 
                         {
                             UserId = e.UserId, 
-                            Gender = u.Gender, 
+                            Country = u.Country, 
                             Date = e.DateTime 
                         }
                     )
@@ -46,13 +46,13 @@ namespace DataAgregation.Tools
                     .AsEnumerable()
                     .Select(g =>
                     {
-                        var genders = SortedDistinctGenders;
+                        var Countries = SortedDistinctCountries;
                         return new DateListIntervalEnters<int>
                         {
                             Date = DateOnly.FromDateTime(g.Key),
-                            IntervalEnters = genders
-                                .Select(gender => g
-                                    .Where(e => e.Gender == gender)
+                            IntervalEnters = Countries
+                                .Select(Country => g
+                                    .Where(e => e.Country == Country)
                                     .Select(e => e.UserId)
                                     .Distinct()
                                     .Count())
@@ -76,7 +76,7 @@ namespace DataAgregation.Tools
             return mergedStats;
         }
 
-        public static async Task<List<DateListIntervalEnters<decimal>>> GetRevenuebyGenderAsync()
+        public static async Task<List<DateListIntervalEnters<decimal>>> GetRevenuebyCountryAsync()
         {
             var stats = await DBHandler.ExecuteInMultiThreadUsingList((context) =>
             {
@@ -91,19 +91,19 @@ namespace DataAgregation.Tools
                         context.Users,
                         e => e.UserId,
                         u => u.UserId,
-                        (e, u) => new { e.Date, e.Income, u.Gender }
+                        (e, u) => new { e.Date, e.Income, u.Country }
                     )
                     .GroupBy(e => e.Date)
                     .AsEnumerable()
                     .Select(g =>
                     {
-                        var genders = SortedDistinctGenders;
+                        var Countries = SortedDistinctCountries;
                         return new DateListIntervalEnters<decimal>
                         {
                             Date = DateOnly.FromDateTime(g.Key),
-                            IntervalEnters = genders
-                            .Select(gender => g
-                                .Where(g => g.Gender == gender)
+                            IntervalEnters = Countries
+                            .Select(Country => g
+                                .Where(g => g.Country == Country)
                                 .Sum(e => e.Income))
                             .ToList(),
                         };
@@ -125,7 +125,7 @@ namespace DataAgregation.Tools
             return mergedStats;
         }
 
-        public static async Task<List<int>> GetMauByGenderAsync()
+        public static async Task<List<int>> GetMauByCountryAsync()
         {
             DateTime lastDate = await DBHandler.GetDateOfLastEventAsync();
             var stats = await DBHandler.ExecuteInMultiThreadUsingSingleValue((context) =>
@@ -136,12 +136,12 @@ namespace DataAgregation.Tools
                         context.Users,
                         e => e.UserId,
                         u => u.UserId,
-                        (e, u) => new { UserId = e.UserId, Gender = u.Gender }
+                        (e, u) => new { UserId = e.UserId, Country = u.Country }
                     );
-                var genders = SortedDistinctGenders;
-                return genders
-                    .Select(gender => groups
-                        .Where(g => g.Gender == gender)
+                var Countries = SortedDistinctCountries;
+                return Countries
+                    .Select(Country => groups
+                        .Where(g => g.Country == Country)
                         .Select(e => e.UserId)
                         .Distinct()
                         .Count())
@@ -155,7 +155,7 @@ namespace DataAgregation.Tools
             return mergedStats;
         }
 
-        public static async Task<List<ItemStatisticWithIntervals>> GetItemsStatisticByGender()
+        public static async Task<List<ItemStatisticWithIntervals>> GetItemsStatisticByCountry()
         {
             var stats = await DBHandler.ExecuteInMultiThreadUsingList((context) =>
             {
@@ -170,24 +170,24 @@ namespace DataAgregation.Tools
                         context.Users,
                         e => e.UserId,
                         u => u.UserId,
-                        (e, u) => new { e.ItemName, e.Price, u.Gender }
+                        (e, u) => new { e.ItemName, e.Price, u.Country }
                     )
                     .GroupBy(e => e.ItemName)
                     .AsEnumerable()
                     .Select(g =>
                     {
-                        var genders = SortedDistinctGenders;
+                        var Countries = SortedDistinctCountries;
                         return new ItemStatisticWithIntervals
                         {
                             ItemName = g.Key,
-                            Income = genders
-                                .Select(gender => g
-                                    .Where(g => g.Gender == gender)
+                            Income = Countries
+                                .Select(Country => g
+                                    .Where(g => g.Country == Country)
                                     .Sum(e => e.Price))
                                 .ToList(),
-                            Amount = genders
-                                .Select(gender => g
-                                    .Where(g => g.Gender == gender)
+                            Amount = Countries
+                                .Select(Country => g
+                                    .Where(g => g.Country == Country)
                                     .Count())
                                 .ToList(),
                         };
@@ -223,7 +223,7 @@ namespace DataAgregation.Tools
             return mergedStats;
         }
 
-        public static async Task<List<StageStatisticWithIntervals>> GetStageStatisticByGenderAsync()
+        public static async Task<List<StageStatisticWithIntervals>> GetStageStatisticByCountryAsync()
         {
             var stats = await DBHandler.ExecuteInMultiThreadUsingList((context) =>
             {
@@ -238,18 +238,18 @@ namespace DataAgregation.Tools
                         context.Users,
                         e => e.UserId,
                         u => u.UserId,
-                        (e, u) => new { e.Stage, u.Gender }
+                        (e, u) => new { e.Stage, u.Country }
                     )
                     .GroupBy(ss => ss.Stage)
                     .AsEnumerable()
                     .Select(g =>
                     {
-                        var genders = SortedDistinctGenders;
+                        var Countries = SortedDistinctCountries;
                         return new
                         {
                             Stage = g.Key,
-                            Starts = genders
-                            .Select(gender => g.Where(g => g.Gender == gender).Count())
+                            Starts = Countries
+                            .Select(Country => g.Where(g => g.Country == Country).Count())
                             .ToList(),
                         };
                     }).Join(
@@ -264,29 +264,29 @@ namespace DataAgregation.Tools
                         context.Users,
                         e => e.UserId,
                         u => u.UserId,
-                        (ss, u) => new { ss.Stage, ss.IsWon, ss.Income, u.Gender }
+                        (ss, u) => new { ss.Stage, ss.IsWon, ss.Income, u.Country }
                     )
                     .GroupBy(se => se.Stage)
                     .AsEnumerable()
                     .Select(g =>
                     {
-                        var genders = SortedDistinctGenders;
+                        var Countries = SortedDistinctCountries;
                         return new
                         {
                             Stage = g.Key,
-                            Wins = genders
-                            .Select(gender => g
-                                .Where(g => g.Gender == gender)
+                            Wins = Countries
+                            .Select(Country => g
+                                .Where(g => g.Country == Country)
                                 .Count(e => e.IsWon))
                             .ToList(),
-                            Income = genders
-                            .Select(gender => g
-                                .Where(g => g.Gender == gender)
+                            Income = Countries
+                            .Select(Country => g
+                                .Where(g => g.Country == Country)
                                 .Sum(e => (int)e.Income))
                             .ToList(),
-                            Ends = genders
-                            .Select(gender => g
-                                .Where(g => g.Gender == gender)
+                            Ends = Countries
+                            .Select(Country => g
+                                .Where(g => g.Country == Country)
                                 .Count())
                             .ToList(),
                         };
