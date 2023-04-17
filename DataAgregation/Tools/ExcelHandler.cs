@@ -31,7 +31,7 @@ namespace DataAgregation.Tools
             {
                 colunsHeaders[i + 1] = $"{intervals.ElementAt(i).MinValue}-{intervals.ElementAt(i).MaxValue}";
             }
-            var data = await dBHandler.GetAgeStatisticByEventTypeAsync(1, intervals);
+            var data = await AgeService.GetAgeStatisticByEventTypeAsync(1, intervals);
             WriteInExcel(
                 "DAU",
                 colunsHeaders,
@@ -40,7 +40,7 @@ namespace DataAgregation.Tools
 
         internal async Task WriteDAUWithClusters2()
         {
-            var dateAges = await dBHandler.GetDateAgesByEventTypeAsync(1);
+            var dateAges = await AgeService.GetDateAgesByEventTypeAsync(1);
             ClasterMaker clasterMaker = new ClasterMaker();
             var clusterInput = dateAges.SelectMany(da => da.Ages).Select(a => new ClusterInput(a));
             var model = clasterMaker.CreateModel(clusterInput, 4);
