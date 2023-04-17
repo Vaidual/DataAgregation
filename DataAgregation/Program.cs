@@ -251,27 +251,34 @@ using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/la
     intervalHeaders[0] = "Tier0";
     for (int i = 1; i < intervalHeaders.Count(); i++)
     {
-        intervalHeaders[i] = $"Tier{i}: {intervals.ElementAt(i - 1).MinValue}-{intervals.ElementAt(i - 1).MaxValue}";
+        if (intervals.ElementAt(i - 1).MinValue == intervals.ElementAt(i - 1).MaxValue)
+        {
+            intervalHeaders[i] = $"Tier{i}({intervals.ElementAt(i - 1).MinValue})";
+        }
+        else
+        {
+            intervalHeaders[i] = $"Tier{i}({intervals.ElementAt(i - 1).MinValue}-{intervals.ElementAt(i - 1).MaxValue})";
+        }
     }
 
     LastDayIncomeService.Intervals = intervals.Prepend(new Interval { MinValue = 0, MaxValue = 0 }).ToArray();
 
-    excelHandler.WriteInExcel(
-        "Revenue",
-        intervalHeaders.Prepend("ItemName").ToArray(),
-        await LastDayIncomeService.GetRevenuebyIncomeAsync());
+    //excelHandler.WriteInExcel(
+    //    "Revenue",
+    //    intervalHeaders.Prepend("ItemName").ToArray(),
+    //    await LastDayIncomeService.GetRevenuebyIncomeAsync());
     //excelHandler.WriteInExcel(
     //    "DAU",
     //    intervalHeaders.Prepend("ItemName").ToArray(),
-    //    await LastDayIncomeService.GetAgeStatisticByEventTypeAsync(1));
+    //    await LastDayIncomeService.GetIncomeStatisticByEventTypeAsync(1));
     //excelHandler.WriteInExcel(
     //    "New Users",
     //    intervalHeaders.Prepend("ItemName").ToArray(),
-    //    await LastDayIncomeService.GetAgeStatisticByEventTypeAsync(2));
+    //    await LastDayIncomeService.GetIncomeStatisticByEventTypeAsync(2));
     //excelHandler.WriteInExcel(
     //    "MAU",
     //    intervalHeaders,
-    //    await LastDayIncomeService.GetMauByAgeAsync());
+    //    await LastDayIncomeService.GetMauByIncomeAsync());
     //excelHandler.WriteInExcel(
     //    "Items Statistic",
     //    new string[][]
@@ -281,18 +288,18 @@ using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/la
     //        intervalHeaders.Prepend("Income").ToArray(),
     //        intervalHeaders.Prepend("USD").ToArray(),
     //    },
-    //    await LastDayIncomeService.GetItemsStatisticByAge());
-    //excelHandler.WriteInExcel(
-    //    "Stages Statistic",
-    //    new string[][]
-    //    {
-    //        new string[] { "Stage"},
-    //        intervalHeaders.Prepend("Starts").ToArray(),
-    //        intervalHeaders.Prepend("Ends").ToArray(),
-    //        intervalHeaders.Prepend("Wins").ToArray(),
-    //        intervalHeaders.Prepend("Income").ToArray(),
-    //        intervalHeaders.Prepend("USD").ToArray(),
+    //    await LastDayIncomeService.GetItemsStatisticByIncome());
+    excelHandler.WriteInExcel(
+        "Stages Statistic",
+        new string[][]
+        {
+            new string[] { "Stage"},
+            intervalHeaders.Prepend("Starts").ToArray(),
+            intervalHeaders.Prepend("Ends").ToArray(),
+            intervalHeaders.Prepend("Wins").ToArray(),
+            intervalHeaders.Prepend("Income").ToArray(),
+            intervalHeaders.Prepend("USD").ToArray(),
 
-    //    },
-    //    await LastDayIncomeService.GetStageStatisticByAgeAsync());
+        },
+        await LastDayIncomeService.GetStageStatisticByIncomeAsync());
 }
