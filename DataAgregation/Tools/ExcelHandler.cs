@@ -41,7 +41,7 @@ namespace DataAgregation.Tools
         internal async Task WriteDAUWithClusters2()
         {
             var dateAges = await AgeService.GetDateAgesByEventTypeAsync(1);
-            ClasterMaker clasterMaker = new ClasterMaker();
+            ClusterMaker clasterMaker = new ClusterMaker();
             var clusterInput = dateAges.SelectMany(da => da.Ages).Select(a => new ClusterInput(a));
             var model = clasterMaker.CreateModel(clusterInput, 4);
 

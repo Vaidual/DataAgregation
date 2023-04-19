@@ -75,10 +75,23 @@ namespace DataAgregation.Tools
             var dataView = _mlContext.Data.LoadFromEnumerable(data);
             var model = pipeline.Fit(dataView);
             var predictions = model.Transform(dataView);
-            var clusters = _mlContext.Data.CreateEnumerable<ClusterPrediction>(predictions, reuseRowObject: false);
-            var valueClusters = data.Zip(clusters, (inputData, cluster) => new { Value = inputData.Value, ClusterId = cluster.ClusterId });
+            var clusters = _mlContext.Data.CreateEnumerable<ClusterPrediction>(
+                predictions, 
+                reuseRowObject: false);
+            var valueClusters = data
+                .Zip(clusters, (inputData, cluster) => new 
+                {
+                    Value = inputData.Value, 
+                    ClusterId = cluster.ClusterId 
+                });
             return valueClusters.GroupBy(a => a.ClusterId)
-                .Select(g => new Interval { MinValue = (int)g.Min(a => a.Value), MaxValue = (int)g.Max(a => a.Value) }).OrderBy(e => e.MinValue).ToArray();
+                .Select(g => new Interval 
+                { 
+                    MinValue = (int)g.Min(a => a.Value), 
+                    MaxValue = (int)g.Max(a => a.Value) 
+                })
+                .OrderBy(e => e.MinValue)
+                .ToArray();
         }
 
         public IEnumerable<EntrancesInTheInterval> FindAgeIntervalsAndNumberOdEntrances(IEnumerable<ClusterInput> data)
