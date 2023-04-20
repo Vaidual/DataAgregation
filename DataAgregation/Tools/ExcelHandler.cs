@@ -41,7 +41,7 @@ namespace DataAgregation.Tools
         internal async Task WriteDAUWithClusters2()
         {
             var dateAges = await AgeService.GetDateAgesByEventTypeAsync(1);
-            ClusterMaker clasterMaker = new ClusterMaker();
+            ClasterMaker clasterMaker = new ClasterMaker();
             var clusterInput = dateAges.SelectMany(da => da.Ages).Select(a => new ClusterInput(a));
             var model = clasterMaker.CreateModel(clusterInput, 4);
 
@@ -133,7 +133,7 @@ namespace DataAgregation.Tools
             var itemsStatistic = await dBHandler.GetItemsByDateStatistic();
             WriteInExcel(
                 "Items by date info",
-                new string[] { "Date", "Items sold", "Income" },
+                new string[] { "Date", "Items sold", "Spent Currency", "USD Income" },
                 itemsStatistic);
         }
 
@@ -220,7 +220,12 @@ namespace DataAgregation.Tools
                     var prop = obj.GetType().GetProperties()[j];
                     var value = prop.GetValue(obj);
                     var type = prop.PropertyType;
-                    if (typeof(IEnumerable).IsAssignableFrom(type))
+                    if (type.IsValueType || value is string)
+                    {
+                        sheet.Cells[i + 2, col].Value = value;
+                        col++;
+                    }
+                    else if (typeof(IEnumerable).IsAssignableFrom(type))
                     {
                         var list = value as IEnumerable;
                         foreach (var item in list)
@@ -232,11 +237,6 @@ namespace DataAgregation.Tools
                             sheet.Cells[i + 2, col].Value = item;
                             col++;
                         }
-                    }
-                    else if (type.IsValueType)
-                    {
-                        sheet.Cells[i + 2, col].Value = value;
-                        col++;
                     }
                     else if (type.IsClass)
                     {

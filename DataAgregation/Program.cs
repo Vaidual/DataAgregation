@@ -42,6 +42,13 @@ DBHandler dBHandler = new DBHandler();
 //    await excelHandler.WriteStageStatistic();
 //    await excelHandler.WriteItemsStatistic();
 //    await excelHandler.WriteItemsByDateStatistic();
+
+
+//    excelHandler.WriteInExcel(
+//        "Revenue With Sold Currency",
+//        new string[] { "Date", "Income", "Sold Currency" },
+//        await dBHandler.GetRevenueWithSoldCurrencyAsync()
+//    );
 //}
 
 //using (ExcelHandler excelHandler = new ExcelHandler("../../../output/clusters/age-clusters.xlsx"))

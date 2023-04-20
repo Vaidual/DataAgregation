@@ -62,23 +62,23 @@ namespace DataAgregation.Tools
         private static IQueryable<UserIsCheaterByDate> GetUserIsCheaterByDates(DataContext context, IQueryable<Event> events)
         {
             return events
-                .Join(
-                    context.Users,
-                    e => e.UserId,
-                    u => u.UserId,
-                    (e, u) => new
-                    {
-                        UserId = e.UserId,
-                        Date = e.DateTime,
-                        EventId = e.EventId,
-                    }
-                )
+                //.Join(
+                //    context.Users,
+                //    e => e.UserId,
+                //    u => u.UserId,
+                //    (e, u) => new
+                //    {
+                //        UserId = e.UserId,
+                //        Date = e.DateTime,
+                //        EventId = e.EventId,
+                //    }
+                //)
                 .Select(x => new
                 {
-                    x.Date,
+                    Date = x.DateTime,
                     x.UserId,
                     x.EventId,
-                    Income = context.Events.Where(e => e.UserId == x.UserId && e.DateTime == x.Date && e.EventType == 4)
+                    Income = context.Events.Where(e => e.UserId == x.UserId && e.DateTime == x.DateTime)
                         .Join(
                             context.StageEnds,
                             e => e.EventId,

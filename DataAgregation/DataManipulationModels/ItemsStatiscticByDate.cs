@@ -10,6 +10,7 @@ namespace DataAgregation.DataManipulationModels
     {
         public DateOnly Date { get; set; }
         public int SoldAmount { get; set; }
-        public decimal Income { get; set; }
+        public int SpentCurrency { get; set; }
+        public decimal USD { get; set; }
     }
 }

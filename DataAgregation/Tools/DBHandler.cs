@@ -2,9 +2,11 @@
 using DataAgregation.DataManipulationModels;
 using DataAgregation.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,6 +22,118 @@ namespace DataAgregation.Tools
     public class DBHandler
     {
         const int maxDb = 8;
+
+        public static async Task<List<UserWithClusters>> GetUsersWithClusters(IList<Interval> ageIntervals, IList<Interval> tierIntervals)
+        {
+            DateTime lastStatisticDate = await GetDateOfLastEventAsync();
+            var users = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                return context.Users
+                    .Select(u => new
+                    {
+                        UserId = u.UserId,
+                        Age = u.Age,
+                        Gender = u.Gender,
+                        Country = u.Country,
+                        IncomeUSD = context.CurrencyPurchases
+                            .Join(
+                                context.Events.Where(
+                                    e => e.UserId == u.UserId &&
+                                    e.DateTime == lastStatisticDate
+                                ),
+                                cp => cp.EventId,
+                                e => e.EventId,
+                                (cp, e) => cp.Price
+                            )
+                            .Sum(),
+                        incomeFromStages = context.Events.Where(e => e.UserId == u.UserId)
+                            .Join(
+                                context.StageEnds,
+                                e => e.EventId,
+                                se => se.EventId,
+                                (e, se) => new
+                                {
+                                    Date = e.DateTime,
+                                    Income = se.Income,
+                                })
+                            .GroupBy(x => x.Date)
+                            .Select(g => new
+                            {
+                                Date = g.Key,
+                                Income = g.Sum(se => (int)se.Income)
+                            })
+                            .ToList(),
+                        incomeFromPurchases = context.Events.Where(e => e.UserId == u.UserId)
+                            .Join(
+                                context.CurrencyPurchases,
+                                e => e.EventId,
+                                cp => cp.EventId,
+                                (e, cp) => new
+                                {
+                                    Date = e.DateTime,
+                                    Income = cp.Income,
+                                })
+                            .GroupBy(x => x.Date)
+                            .Select(g => new
+                            {
+                                Date = g.Key,
+                                Income = g.Sum(se => se.Income)
+                            })
+                            .ToList(),
+                        expenses = context.Events.Where(e => e.UserId == u.UserId)
+                            .Join(
+                                context.IngamePurchases,
+                                e => e.EventId,
+                                ip => ip.EventId,
+                                (e, ip) => new
+                                {
+                                    Date = e.DateTime,
+                                    Expenses = ip.Price
+                                })
+                            .GroupBy(x => x.Date)
+                            .Select(g => new
+                            {
+                                Date = g.Key,
+                                Expenses = g.Sum(se => se.Expenses)
+                            }).
+                            ToList(),
+                    })
+                    .ToList()
+                    .DistinctBy(u => u.UserId)
+                    .Select(u =>
+                    {
+                        var totalIncome = u.incomeFromStages
+                            .Concat(u.incomeFromPurchases)
+                            .GroupBy(x => x.Date)
+                            .Select(x => new { Date = x.Key, Income = x.Sum(y => y.Income) });
+
+                        var IsCheater = false;
+                        foreach (var e in u.expenses)
+                        {
+                            if ((totalIncome.FirstOrDefault(ti => ti.Date == e.Date)?.Income ?? 0) < e.Expenses)
+                            {
+                                IsCheater = true;
+                                break;
+                            }
+                        }
+
+                        var ageInterval = ageIntervals.First(x => u.Age >= x.MinValue && u.Age <= x.MaxValue);
+                        var tier = tierIntervals.IndexOf(tierIntervals.First(x => u.IncomeUSD >= x.MinValue && u.IncomeUSD <= x.MaxValue));
+                        return new UserWithClusters
+                        {
+                            UserId = u.UserId,
+                            Age = u.Age,
+                            Gender = u.Gender,
+                            Country = u.Country,
+                            IsCheater = IsCheater,
+                            AgeInterval = $"{ageInterval.MinValue}-{ageInterval.MaxValue}",
+                            IncomeTier = tier
+                        };
+                    });
+            });
+
+            return users.ToList();
+        }
 
         public static async Task<DateTime> GetDateOfLastCurrencyPurchaseAsync()
         {
@@ -96,7 +210,7 @@ namespace DataAgregation.Tools
                     {
                         Date = DateOnly.FromDateTime(g.Key),
                         SoldAmount = g.Count(),
-                        Income = g.Sum(e => e.Price)
+                        SpentCurrency = g.Sum(e => e.Price)
                     });
             });
             var mergedEvents = events
@@ -105,10 +219,15 @@ namespace DataAgregation.Tools
                 {
                     Date = g.Key,
                     SoldAmount = g.Sum(e => e.SoldAmount),
-                    Income = g.Sum(e => e.Income)
+                    SpentCurrency = g.Sum(e => e.SpentCurrency)
                 })
                 .OrderBy(e => e.Date)
                 .ToList();
+            List<CurrencyRate> rate = await GetCurrencyRateAsync();
+            foreach (var stat in mergedEvents)
+            {
+                stat.USD = stat.SpentCurrency * rate.First(r => r.Date == stat.Date).Rate;
+            }
 
             return mergedEvents;
         }
@@ -332,6 +451,34 @@ namespace DataAgregation.Tools
                 })
                 .OrderBy(stat => stat.Stage)
                 .ThenBy(stat => stat.Date)
+                .ToList();
+            return mergedEvents;
+        }
+
+        public async Task<List<RevenueWithSoldCurrency>> GetRevenueWithSoldCurrencyAsync()
+        {
+            var events = await ExecuteInMultiThreadUsingList((context) =>
+            {
+                return context.Events
+                    .Where(e => e.EventType == 6)
+                    .Include(e => e.CurrencyPurchases)
+                    .GroupBy(e => e.DateTime)
+                    .Select(g => new RevenueWithSoldCurrency
+                    {
+                        Date = g.Key.ToShortDateString(),
+                        Income = g.SelectMany(e => e.CurrencyPurchases).Sum(cp => cp.Price),
+                        SoldCurrency = g.SelectMany(e => e.CurrencyPurchases).Sum(cp => cp.Income),
+                    });
+            });
+            var mergedEvents = events
+                .GroupBy(e => e.Date)
+                .Select(g => new RevenueWithSoldCurrency
+                {
+                    Date = g.Key,
+                    Income = g.Sum(e => e.Income),
+                    SoldCurrency = g.Sum(e => e.SoldCurrency),
+                })
+                .OrderBy(e => e.Date)
                 .ToList();
             return mergedEvents;
         }
